@@ -600,11 +600,11 @@ function LandingPage({ navigate, lang, setLang }: { navigate: (p: Page) => void;
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
             {[
-              { route: "Toshkent → Chirchiq", price: "95 000" },
-              { route: "Toshkent → Samarqand", price: "285 000" },
-              { route: "Farg'ona → Toshkent", price: "420 000" },
-              { route: "Buxoro → Qarshi", price: "260 000" },
-              { route: "Toshkent → Andijon", price: "490 000" },
+              { route: "Toshkent → Chirchiq", price: "25 000" },
+              { route: "Toshkent → Samarqand", price: "55 000" },
+              { route: "Toshkent → Namangan", price: "40 000" },
+              { route: "Toshkent → Andijon", price: "80 000" },
+              { route: "Buxoro → Qarshi", price: "45 000" },
             ].map(({ route, price }) => (
               <div key={route} className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm text-center hover:border-blue-200 hover:shadow-md transition-all">
                 <div className="flex items-center justify-center gap-1 mb-2 text-xs font-medium text-slate-600"><MapPin size={11} className="text-blue-500" />{route}</div>
@@ -871,15 +871,22 @@ function PriceCalculatorPage({ lang, navigate }: { lang: Lang; navigate: (p: Pag
 
   function calculate() {
     const dist = getDistance(form.fromRegion, form.toRegion);
-    const base = 50000 + dist * 850;
+    // Tiered base price: cheap demo rates that match the C2C affordability promise
+    let base: number;
+    if (dist <= 100) base = 15000 + dist * 200;          // 15 000–35 000
+    else if (dist <= 250) base = 35000 + (dist - 100) * 133; // 35 000–55 000
+    else if (dist <= 400) base = 55000 + (dist - 250) * 133; // 55 000–75 000
+    else if (dist <= 600) base = 75000 + (dist - 400) * 100; // 75 000–95 000
+    else base = Math.min(95000 + (dist - 600) * 50, 120000); // up to 120 000
     const cargoIndex = cargoTypes.indexOf(form.cargoType);
-    const coeffs = [1.15, 0.9, 1.0, 1.1, 0.85, 1.0];
+    // Small cargo-type adjustments (±10%) to keep totals in demo range
+    const coeffs = [1.08, 0.92, 1.0, 1.06, 0.90, 1.0];
     const typeCoeff = cargoIndex >= 0 ? (coeffs[cargoIndex] || 1.0) : 1.0;
     const tIndex = transportTypes.indexOf(form.transport);
-    const tCoeffs = [0.8, 0.85, 1.05, 1.3, 1.35];
+    const tCoeffs = [0.85, 0.90, 1.05, 1.15, 1.20];
     const transportCoeff = tIndex >= 0 ? (tCoeffs[tIndex] || 1.0) : 1.0;
     const urgentCoeff = form.urgent ? 1.3 : 1.0;
-    const sub = Math.round(base * typeCoeff * transportCoeff * urgentCoeff);
+    const sub = Math.min(Math.round(base * typeCoeff * transportCoeff * urgentCoeff), 120000);
     const fee = Math.round(sub * 0.05);
     setResult({ distance: dist, base: sub, typeCoeff, transportLabel: form.transport, cargoLabel: form.cargoType, platformFee: fee, total: sub + fee });
   }
@@ -1003,11 +1010,11 @@ function PriceCalculatorPage({ lang, navigate }: { lang: Lang; navigate: (p: Pag
               <h4 className="font-semibold text-slate-900 text-sm mb-3">{tr.samplePrices}</h4>
               <div className="space-y-2">
                 {[
-                  { route: "Toshkent → Chirchiq", price: "95 000" },
-                  { route: "Toshkent → Samarqand", price: "285 000" },
-                  { route: "Buxoro → Qarshi", price: "260 000" },
-                  { route: "Farg'ona → Toshkent", price: "420 000" },
-                  { route: "Toshkent → Andijon", price: "490 000" },
+                  { route: "Toshkent → Chirchiq", price: "25 000" },
+                  { route: "Toshkent → Samarqand", price: "55 000" },
+                  { route: "Toshkent → Andijon", price: "80 000" },
+                  { route: "Farg'ona → Toshkent", price: "85 000" },
+                  { route: "Nukus → Toshkent", price: "120 000" },
                 ].map(({ route, price }) => (
                   <div key={route} className="flex justify-between items-center text-xs py-1.5 border-b border-slate-50">
                     <span className="text-slate-600">{route}</span>
@@ -1111,7 +1118,12 @@ function CreateOrderPage({ navigate, lang }: { navigate: (p: Page) => void; lang
 
   function calcPrice() {
     const dist = getDistance(form.fromRegion || "Toshkent shahri", form.toRegion || "Samarqand viloyati");
-    const base = 50000 + dist * 850;
+    let base: number;
+    if (dist <= 100) base = 15000 + dist * 200;
+    else if (dist <= 250) base = 35000 + (dist - 100) * 133;
+    else if (dist <= 400) base = 55000 + (dist - 250) * 133;
+    else if (dist <= 600) base = 75000 + (dist - 400) * 100;
+    else base = Math.min(95000 + (dist - 600) * 50, 120000);
     const extras = (form.refrigerated ? 40000 : 0) + (form.express ? 60000 : 0) + (form.insurance ? 20000 : 0) + (form.loader ? 30000 : 0);
     const sub = base + extras;
     return { base, extras, commission: Math.round(sub * 0.05), total: Math.round(sub * 1.05), dist };
