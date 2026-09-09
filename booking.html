@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QS Employer Survey — Uchrashuvlar</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f0f2f5;
+  color: #1a1a2e;
+  min-height: 100vh;
+}
+.header {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: #fff;
+  padding: 24px 16px;
+  text-align: center;
+}
+.header h1 { font-size: 1.4rem; margin-bottom: 4px; }
+.header p { font-size: 0.85rem; opacity: 0.8; }
+.stats {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+  flex-wrap: wrap;
+}
+.stat-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 12px 24px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  min-width: 100px;
+}
+.stat-card .num { font-size: 1.8rem; font-weight: 700; }
+.stat-card .label { font-size: 0.75rem; color: #666; margin-top: 2px; }
+.stat-free .num { color: #27ae60; }
+.stat-booked .num { color: #e74c3c; }
+.stat-total .num { color: #2c3e50; }
+.container { max-width: 900px; margin: 0 auto; padding: 0 16px 32px; }
+.day-section {
+  background: #fff;
+  border-radius: 12px;
+  margin-top: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+.day-header {
+  background: #16213e;
+  color: #fff;
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; padding: 12px; }
+.slot {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.slot:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+.slot-time { font-weight: 600; font-size: 0.9rem; }
+.slot.free { border-color: #27ae60; background: #f0faf4; }
+.slot.booked { border-color: #e74c3c; background: #fdf0ef; cursor: default; }
+.slot.booked:hover { transform: none; box-shadow: none; }
+.badge {
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.badge-free { background: #27ae60; color: #fff; }
+.badge-booked { background: #e74c3c; color: #fff; }
+.dept-name { font-size: 0.75rem; color: #e74c3c; font-weight: 500; margin-top: 2px; max-width: 140px; text-align: right; line-height: 1.2; }
+
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+.modal h2 { font-size: 1.1rem; margin-bottom: 4px; }
+.modal .slot-info { color: #666; font-size: 0.85rem; margin-bottom: 16px; }
+.modal label { font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 6px; }
+.modal select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: #fff;
+  margin-bottom: 16px;
+  appearance: auto;
+}
+.modal-buttons { display: flex; gap: 8px; }
+.modal-buttons button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.modal-buttons button:hover { opacity: 0.85; }
+.btn-cancel { background: #e0e0e0; color: #333; }
+.btn-confirm { background: #27ae60; color: #fff; }
+.btn-confirm:disabled { background: #ccc; cursor: not-allowed; }
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: #1a1a2e;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  z-index: 200;
+  transition: transform 0.3s ease;
+  text-align: center;
+  max-width: 90%;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #888;
+  font-size: 0.9rem;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>QS Employer Survey — Kafedra Uchrashuvlari</h1>
+  <p>TATU | 10–15 sentabr 2026</p>
+</div>
+
+<div class="stats">
+  <div class="stat-card stat-free">
+    <div class="num" id="stat-free">-</div>
+    <div class="label">Bo'sh</div>
+  </div>
+  <div class="stat-card stat-booked">
+    <div class="num" id="stat-booked">-</div>
+    <div class="label">Band</div>
+  </div>
+  <div class="stat-card stat-total">
+    <div class="num" id="stat-total">35</div>
+    <div class="label">Jami</div>
+  </div>
+</div>
+
+<div class="container" id="app">
+  <div class="loading">Yuklanmoqda...</div>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>Slot bron qilish</h2>
+    <div class="slot-info" id="modal-info"></div>
+    <label for="dept-select">Kafedrani tanlang:</label>
+    <select id="dept-select">
+      <option value="">— Tanlang —</option>
+    </select>
+    <div class="modal-buttons">
+      <button class="btn-cancel" onclick="closeModal()">Bekor</button>
+      <button class="btn-confirm" id="btn-confirm" onclick="confirmBooking()">Bron qilish</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.49.1/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = 'https://wqdxytumjbwytolohtff.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxZHh5dHVtamJ3eXRvbG9odGZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5MjEyMjUsImV4cCI6MjEwNDQ5NzIyNX0.jwT0QH32-KRXqdEDwFXxOWTx4CnXCwaoqqoelTI1dNc';
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const DEPARTMENTS = [
+  "Raqamli texnologiyalar konvergensiyasi",
+  "Sun'iy intellekt",
+  "Robototexnika va intellektual tizimlar",
+  "Kompyuter tizimlari",
+  "Multimedia texnologiyalari",
+  "AT dasturiy ta'minoti",
+  "Tizimli va amaliy dasturlashtirish",
+  "Dasturlash texnologiyalari",
+  "Algoritmlash va matematik modellashtirish",
+  "Oliy matematika",
+  "Axborot xavfsizligi",
+  "Kriptologiya",
+  "Kiberxavfsizlik va kriminalistika",
+  "Infokommunikatsiya injiniringi",
+  "Telekommunikatsiya injiniringi",
+  "Ma'lumotlarni uzatish tarmoqlari va tizimlari",
+  "Energiya ta'minlash tizimlari",
+  "Televizion va media texnologiyalar",
+  "Fizika",
+  "Elektronika va radiotexnika",
+  "Mobil aloqa texnologiyalari",
+  "Teleradioeshittirish tizimlari",
+  "Chet tillari",
+  "O'zbek va rus tillari",
+  "Menejment va marketing",
+  "AKT sohasida iqtisodiyot",
+  "Axborot ta'lim texnologiyalari",
+  "Axborot-kutubxona tizimlari",
+  "Jismoniy madaniyat va gumanitar fanlar"
+];
+
+const DAYS = [
+  { date: '2026-09-10', label: '10-sentabr, payshanba' },
+  { date: '2026-09-11', label: '11-sentabr, juma' },
+  { date: '2026-09-12', label: '12-sentabr, shanba' },
+  { date: '2026-09-14', label: '14-sentabr, dushanba' },
+  { date: '2026-09-15', label: '15-sentabr, seshanba' },
+];
+
+const HOURS = [10, 11, 12, 14, 15, 16, 17];
+
+let bookings = {};
+let selectedSlotId = null;
+
+function slotId(date, hour) {
+  return date + '_' + hour;
+}
+
+function hourLabel(h) {
+  return h + ':00 – ' + (h + 1) + ':00';
+}
+
+async function loadBookings() {
+  const { data, error } = await supabase.from('bookings').select('*');
+  if (error) {
+    console.error('Load error:', error);
+    return;
+  }
+  bookings = {};
+  data.forEach(function(b) { bookings[b.slot_id] = b.department; });
+  render();
+}
+
+function updateStats() {
+  var booked = Object.keys(bookings).length;
+  var total = 35;
+  var free = total - booked;
+  document.getElementById('stat-free').textContent = free;
+  document.getElementById('stat-booked').textContent = booked;
+  document.getElementById('stat-total').textContent = total;
+}
+
+function render() {
+  var app = document.getElementById('app');
+  app.innerHTML = '';
+
+  DAYS.forEach(function(day) {
+    var section = document.createElement('div');
+    section.className = 'day-section';
+
+    var header = document.createElement('div');
+    header.className = 'day-header';
+    header.textContent = day.label;
+    section.appendChild(header);
+
+    var slotsDiv = document.createElement('div');
+    slotsDiv.className = 'slots';
+
+    HOURS.forEach(function(hour) {
+      var sid = slotId(day.date, hour);
+      var isBooked = bookings[sid];
+      var slot = document.createElement('div');
+      slot.className = 'slot ' + (isBooked ? 'booked' : 'free');
+
+      var left = document.createElement('div');
+      var timeSpan = document.createElement('div');
+      timeSpan.className = 'slot-time';
+      timeSpan.textContent = hourLabel(hour);
+      left.appendChild(timeSpan);
+
+      var right = document.createElement('div');
+      right.style.textAlign = 'right';
+
+      if (isBooked) {
+        var badge = document.createElement('span');
+        badge.className = 'badge badge-booked';
+        badge.textContent = 'Band';
+        right.appendChild(badge);
+        var deptEl = document.createElement('div');
+        deptEl.className = 'dept-name';
+        deptEl.textContent = bookings[sid];
+        right.appendChild(deptEl);
+      } else {
+        var badge = document.createElement('span');
+        badge.className = 'badge badge-free';
+        badge.textContent = "Bo'sh";
+        right.appendChild(badge);
+        (function(s, d, h) {
+          slot.addEventListener('click', function() { openModal(s, d, h); });
+        })(sid, day.label, hour);
+      }
+
+      slot.appendChild(left);
+      slot.appendChild(right);
+      slotsDiv.appendChild(slot);
+    });
+
+    section.appendChild(slotsDiv);
+    app.appendChild(section);
+  });
+
+  updateStats();
+}
+
+function openModal(sid, dayLabel, hour) {
+  selectedSlotId = sid;
+  document.getElementById('modal-info').textContent = dayLabel + ' | ' + hourLabel(hour);
+
+  var select = document.getElementById('dept-select');
+  select.innerHTML = '<option value="">— Tanlang —</option>';
+
+  var bookedDepts = {};
+  Object.keys(bookings).forEach(function(k) { bookedDepts[bookings[k]] = true; });
+
+  DEPARTMENTS.forEach(function(dept) {
+    var opt = document.createElement('option');
+    opt.value = dept;
+    opt.textContent = dept;
+    if (bookedDepts[dept]) {
+      opt.disabled = true;
+      opt.textContent = dept + ' (allaqachon bron qilgan)';
+    }
+    select.appendChild(opt);
+  });
+
+  document.getElementById('btn-confirm').disabled = true;
+  select.onchange = function() {
+    document.getElementById('btn-confirm').disabled = !this.value;
+  };
+
+  document.getElementById('modal').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('active');
+  selectedSlotId = null;
+}
+
+async function confirmBooking() {
+  var dept = document.getElementById('dept-select').value;
+  if (!dept || !selectedSlotId) return;
+
+  var btn = document.getElementById('btn-confirm');
+  btn.disabled = true;
+  btn.textContent = 'Saqlanmoqda...';
+
+  var result = await supabase.from('bookings').insert({
+    slot_id: selectedSlotId,
+    department: dept
+  });
+
+  btn.textContent = 'Bron qilish';
+
+  if (result.error) {
+    if (result.error.code === '23505') {
+      showToast('Bu slot allaqachon band qilingan!', true);
+    } else {
+      showToast('Xatolik: ' + result.error.message, true);
+    }
+    closeModal();
+    await loadBookings();
+    return;
+  }
+
+  bookings[selectedSlotId] = dept;
+  closeModal();
+  render();
+  showToast(dept + ' — muvaffaqiyatli bron qilindi!');
+}
+
+function showToast(msg, isError) {
+  var toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.style.background = isError ? '#e74c3c' : '#27ae60';
+  toast.classList.add('show');
+  setTimeout(function() { toast.classList.remove('show'); }, 3000);
+}
+
+supabase
+  .channel('bookings-changes')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, function(payload) {
+    if (payload.eventType === 'INSERT') {
+      bookings[payload.new.slot_id] = payload.new.department;
+      render();
+    } else if (payload.eventType === 'DELETE' && payload.old) {
+      delete bookings[payload.old.slot_id];
+      render();
+    }
+  })
+  .subscribe();
+
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
+
+loadBookings();
+</script>
+</body>
+</html>
