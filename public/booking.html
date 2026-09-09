@@ -198,12 +198,13 @@ body {
 
 <div class="toast" id="toast"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.49.1/supabase.min.js"></script>
-<script>
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
 const SUPABASE_URL = 'https://wqdxytumjbwytolohtff.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxZHh5dHVtamJ3eXRvbG9odGZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5MjEyMjUsImV4cCI6MjEwNDQ5NzIyNX0.jwT0QH32-KRXqdEDwFXxOWTx4CnXCwaoqqoelTI1dNc';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const DEPARTMENTS = [
   "Raqamli texnologiyalar konvergensiyasi",
@@ -259,13 +260,14 @@ function hourLabel(h) {
 }
 
 async function loadBookings() {
-  const { data, error } = await supabase.from('bookings').select('*');
-  if (error) {
-    console.error('Load error:', error);
+  var result = await supabase.from('bookings').select('*');
+  if (result.error) {
+    console.error('Load error:', result.error);
+    document.getElementById('app').innerHTML = '<div class="loading" style="color:#e74c3c">Ma\'lumotlarni yuklashda xatolik. Sahifani yangilang.</div>';
     return;
   }
   bookings = {};
-  data.forEach(function(b) { bookings[b.slot_id] = b.department; });
+  result.data.forEach(function(b) { bookings[b.slot_id] = b.department; });
   render();
 }
 
@@ -340,7 +342,7 @@ function render() {
   updateStats();
 }
 
-function openModal(sid, dayLabel, hour) {
+window.openModal = function(sid, dayLabel, hour) {
   selectedSlotId = sid;
   document.getElementById('modal-info').textContent = dayLabel + ' | ' + hourLabel(hour);
 
@@ -367,14 +369,14 @@ function openModal(sid, dayLabel, hour) {
   };
 
   document.getElementById('modal').classList.add('active');
-}
+};
 
-function closeModal() {
+window.closeModal = function() {
   document.getElementById('modal').classList.remove('active');
   selectedSlotId = null;
-}
+};
 
-async function confirmBooking() {
+window.confirmBooking = async function() {
   var dept = document.getElementById('dept-select').value;
   if (!dept || !selectedSlotId) return;
 
@@ -395,16 +397,16 @@ async function confirmBooking() {
     } else {
       showToast('Xatolik: ' + result.error.message, true);
     }
-    closeModal();
+    window.closeModal();
     await loadBookings();
     return;
   }
 
   bookings[selectedSlotId] = dept;
-  closeModal();
+  window.closeModal();
   render();
   showToast(dept + ' — muvaffaqiyatli bron qilindi!');
-}
+};
 
 function showToast(msg, isError) {
   var toast = document.getElementById('toast');
@@ -428,11 +430,11 @@ supabase
   .subscribe();
 
 document.getElementById('modal').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
+  if (e.target === this) window.closeModal();
 });
 
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Escape') window.closeModal();
 });
 
 loadBookings();
