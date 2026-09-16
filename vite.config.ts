@@ -17,23 +17,28 @@ function figmaAssetResolver() {
 }
 
 export default defineConfig({
-  // Relative base so the site works both at cargo-hub.uz (root)
-  // and at the github.io/cargo-hub/ preview URL
   base: './',
   plugins: [
     figmaAssetResolver(),
-    // The React and Tailwind plugins are both required for Make, even if
-    // Tailwind is not being actively used – do not remove them
     react(),
     tailwindcss(),
   ],
   resolve: {
     alias: {
-      // Alias @ to the src directory
       '@': path.resolve(__dirname, './src'),
     },
   },
-
-  // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/media': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+    },
+  },
   assetsInclude: ['**/*.svg', '**/*.csv'],
 })
