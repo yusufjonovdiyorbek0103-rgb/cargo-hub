@@ -16,6 +16,9 @@ import Messages from "./portal/Messages";
 import SubmissionSuccess from "./portal/SubmissionSuccess";
 import ReviewSuccess from "./portal/ReviewSuccess";
 import PortalStub from "./portal/PortalStub";
+import AuthorRevisions from "./portal/AuthorRevisions";
+import ReviewerCompleted from "./portal/ReviewerCompleted";
+import ReviewerResources from "./portal/ReviewerResources";
 // Journal information pages
 import About from "./About";
 import AimsScope from "./AimsScope";
@@ -105,7 +108,7 @@ export const router = createBrowserRouter([
           { path: "author/submission/:id", Component: SubmissionDetail },
           { path: "author/submissions", Component: AuthorDashboard },
           { path: "author/submission-success", Component: SubmissionSuccess },
-          { path: "author/revisions", Component: PortalStub },
+          { path: "author/revisions", Component: AuthorRevisions },
           { path: "author/messages", Component: Messages },
           { path: "author/profile", Component: UserProfile },
           { path: "author/help", Component: RedirectToHelp },
@@ -121,8 +124,8 @@ export const router = createBrowserRouter([
           { path: "reviewer/assignments", Component: ReviewerDashboard },
           { path: "reviewer/review", Component: ReviewForm },
           { path: "reviewer/review-success", Component: ReviewSuccess },
-          { path: "reviewer/completed", Component: PortalStub },
-          { path: "reviewer/resources", Component: PortalStub },
+          { path: "reviewer/completed", Component: ReviewerCompleted },
+          { path: "reviewer/resources", Component: ReviewerResources },
           { path: "reviewer/messages", Component: Messages },
           { path: "reviewer/profile", Component: UserProfile },
           { path: "production", Component: Production },
