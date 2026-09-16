@@ -816,5 +816,7 @@ class ReviewerListView(generics.ListAPIView):
         qs = User.objects.filter(
             reviewer_status=APPROVAL_APPROVED,
         )
-        # Ensure roles contains 'reviewer' in JSONField
-        return qs.filter(roles__contains=[ROLE_REVIEWER])
+        try:
+            return qs.filter(roles__contains=[ROLE_REVIEWER])
+        except Exception:
+            return qs.filter(roles__icontains=ROLE_REVIEWER)
