@@ -39,8 +39,9 @@ interface Assignment {
 const ASSIGNMENT_STATUS: Record<string, string> = {
   invited: "Invitation Pending",
   accepted: "Review in Progress",
-  completed: "Completed",
+  review_submitted: "Completed",
   declined: "Declined",
+  expired: "Expired",
 };
 
 function formatDate(iso: string): string {
@@ -68,7 +69,7 @@ export default function ReviewerDashboard() {
   const userName = user?.full_name || "Reviewer";
   const pending = assignments.filter((a) => a.status === "invited");
   const active = assignments.filter((a) => a.status === "accepted");
-  const completed = assignments.filter((a) => a.status === "completed");
+  const completed = assignments.filter((a) => a.status === "review_submitted");
 
   return (
     <PortalLayout role="Reviewer" name={userName} navItems={NAV} activePath={pathname}>
@@ -90,7 +91,7 @@ export default function ReviewerDashboard() {
             <CardHeader title="Review Assignments" />
             {loading ? (
               <div className="p-8 text-center text-sm" style={{ color: TEXT }}>Loading assignments...</div>
-            ) : assignments.filter((a) => a.status !== "completed").length === 0 ? (
+            ) : assignments.filter((a) => a.status !== "review_submitted").length === 0 ? (
               <div className="p-8 text-center text-sm" style={{ color: TEXT }}>
                 No active review assignments.
               </div>
@@ -108,7 +109,7 @@ export default function ReviewerDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {assignments.filter((a) => a.status !== "completed").map((a) => (
+                    {assignments.filter((a) => a.status !== "review_submitted").map((a) => (
                       <tr key={a.id} className="hover:bg-gray-50 transition-colors">
                         <Td><span className="font-mono text-[11px] font-semibold" style={{ color: NAVY }}>{a.submission_manuscript_id || `#${a.id}`}</span></Td>
                         <Td>

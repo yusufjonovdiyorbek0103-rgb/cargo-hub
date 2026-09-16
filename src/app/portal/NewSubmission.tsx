@@ -1,8 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { CheckCircle, Upload, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "../AuthContext";
-import { createSubmission, updateSubmission, uploadSubmissionFile, submitSubmission } from "../api";
+import { createSubmission, updateSubmission, uploadSubmissionFile, submitSubmission, fetchTopicAreas } from "../api";
 import {
   NAVY, GOLD, LIGHT, BORDER, TEXT, SERIF,
   PortalLayout, Card, PrimaryBtn, SecondaryBtn, GhostBtn,
@@ -39,17 +39,11 @@ const ARTICLE_TYPES = [
   { value: "perspective", label: "Perspective / Policy Paper" },
 ];
 
-const SUBJECT_AREAS = [
-  "Artificial Intelligence and Machine Learning",
-  "Data Science and Big Data Analytics",
-  "Natural Language Processing and Computer Vision",
-  "Digital Transformation",
-  "Human-Centered AI and HCI",
-  "Cybersecurity and AI Governance",
-  "Smart Cities and IoT",
-  "Digital Economy and FinTech",
-  "Applied AI for Sustainable Development",
-];
+interface TopicArea {
+  id: number;
+  name: string;
+  slug: string;
+}
 
 interface CoAuthor {
   name: string;
@@ -169,6 +163,7 @@ export default function NewSubmission() {
   const [error, setError] = useState("");
 
   const [confirmations, setConfirmations] = useState<boolean[]>(Array(5).fill(false));
+  const [topicAreas, setTopicAreas] = useState<TopicArea[]>([]);
 
   // Step 0
   const [articleType, setArticleType] = useState("");
@@ -179,7 +174,7 @@ export default function NewSubmission() {
   const [runningTitle, setRunningTitle] = useState("");
   const [abstract, setAbstract] = useState("");
   const [keywords, setKeywords] = useState("");
-  const [subjectArea, setSubjectArea] = useState("");
+  const [topicAreaId, setTopicAreaId] = useState("");
   const [coverLetterText, setCoverLetterText] = useState("");
 
   // Step 2 - files
@@ -212,6 +207,15 @@ export default function NewSubmission() {
   const [aiUseDisclosure, setAiUseDisclosure] = useState("");
   const [ethicsApproval, setEthicsApproval] = useState("");
 
+  useEffect(() => {
+    fetchTopicAreas()
+      .then((data) => {
+        const list = Array.isArray(data) ? data : data.results || [];
+        setTopicAreas(list);
+      })
+      .catch(() => setTopicAreas([]));
+  }, []);
+
   const toggleConfirm = (i: number) =>
     setConfirmations((prev) => prev.map((v, idx) => idx === i ? !v : v));
   const allConfirmed = confirmations.every(Boolean);
@@ -242,7 +246,7 @@ export default function NewSubmission() {
     setError("");
     try {
       const kwList = keywords.split(/[,;]/).map((k) => k.trim()).filter(Boolean);
-      const data = {
+      const data: Record<string, unknown> = {
         title, article_type: articleType, language,
         running_title: runningTitle, abstract, keywords: kwList,
         cover_letter_text: coverLetterText,
@@ -254,7 +258,12 @@ export default function NewSubmission() {
         conflict_of_interest: conflictOfInterest,
         ai_use_disclosure: aiUseDisclosure,
         ethics_approval_details: ethicsApproval,
+        originality_confirmation: allConfirmed,
+        plagiarism_agreement: allConfirmed,
+        ethics_compliance: allConfirmed,
+        copyright_agreement: allConfirmed,
       };
+      if (topicAreaId) data.topic_area_id = Number(topicAreaId);
       if (submissionId) {
         await updateSubmission(submissionId, data);
       } else {
@@ -276,7 +285,7 @@ export default function NewSubmission() {
       let sid = submissionId;
       if (!sid) {
         const kwList2 = keywords.split(/[,;]/).map((k) => k.trim()).filter(Boolean);
-        const created = await createSubmission({
+        const submitData: Record<string, unknown> = {
           title, article_type: articleType, language,
           running_title: runningTitle, abstract, keywords: kwList2,
           cover_letter_text: coverLetterText,
@@ -288,14 +297,21 @@ export default function NewSubmission() {
           conflict_of_interest: conflictOfInterest,
           ai_use_disclosure: aiUseDisclosure,
           ethics_approval_details: ethicsApproval,
-        });
+          originality_confirmation: true,
+          plagiarism_agreement: true,
+          ethics_compliance: true,
+          copyright_agreement: true,
+        };
+        if (topicAreaId) submitData.topic_area_id = Number(topicAreaId);
+        const created = await createSubmission(submitData);
         sid = created.id;
         setSubmissionId(sid);
         setManuscriptId(created.manuscript_id || "");
       } else {
-        await updateSubmission(sid, {
+        const updateData: Record<string, unknown> = {
           title, article_type: articleType, language,
-          running_title: runningTitle, abstract, keywords,
+          running_title: runningTitle, abstract,
+          keywords: keywords.split(/[,;]/).map((k) => k.trim()).filter(Boolean),
           cover_letter_text: coverLetterText,
           co_authors: coAuthors,
           english_title: englishTitle, english_abstract: englishAbstract,
@@ -305,7 +321,13 @@ export default function NewSubmission() {
           conflict_of_interest: conflictOfInterest,
           ai_use_disclosure: aiUseDisclosure,
           ethics_approval_details: ethicsApproval,
-        });
+          originality_confirmation: true,
+          plagiarism_agreement: true,
+          ethics_compliance: true,
+          copyright_agreement: true,
+        };
+        if (topicAreaId) updateData.topic_area_id = Number(topicAreaId);
+        await updateSubmission(sid, updateData);
       }
 
       if (manuscriptFile) await uploadSubmissionFile(sid, manuscriptFile, "manuscript");
@@ -386,7 +408,7 @@ export default function NewSubmission() {
               <div><FieldLabel>Running Title</FieldLabel><TextInput placeholder="Short title (max 60 characters)" value={runningTitle} onChange={setRunningTitle} /></div>
               <div><FieldLabel required>Abstract</FieldLabel><TextArea rows={6} placeholder="180-250 words." value={abstract} onChange={setAbstract} /></div>
               <div><FieldLabel required>Keywords</FieldLabel><TextInput placeholder="Keyword 1; Keyword 2; Keyword 3" value={keywords} onChange={setKeywords} /></div>
-              <div><FieldLabel>Subject Area</FieldLabel><SelectInput options={SUBJECT_AREAS} placeholder="Select subject area..." value={subjectArea} onChange={setSubjectArea} /></div>
+              <div><FieldLabel required>Subject Area</FieldLabel><SelectInput options={topicAreas.map((t) => ({ value: String(t.id), label: t.name }))} placeholder="Select subject area..." value={topicAreaId} onChange={setTopicAreaId} /></div>
               <div><FieldLabel>Cover Letter (text)</FieldLabel><TextArea rows={4} placeholder="Briefly explain the manuscript's contribution." value={coverLetterText} onChange={setCoverLetterText} /></div>
             </div>
           )}

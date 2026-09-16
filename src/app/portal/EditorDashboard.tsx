@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { Search } from "lucide-react";
 import { useAuth } from "../AuthContext";
-import { fetchEditorSubmissions, fetchReviewers, inviteReviewer, makeDecision, startScreening, sendToReview, moveToDecision } from "../api";
+import { fetchEditorSubmissions, fetchReviewers, inviteReviewer, makeDecision, startScreening, sendToReview, moveToDecision, publishSubmission } from "../api";
 import {
   NAVY, GOLD, LIGHT, BORDER, TEXT, SERIF,
   PortalLayout, SummaryCard, StatusBadge,
@@ -232,7 +232,13 @@ export default function EditorDashboard() {
                             className="px-2.5 py-1 text-[11px] font-semibold rounded text-white transition-opacity hover:opacity-80"
                             style={{ backgroundColor: NAVY }}>Decide</button>
                         )}
-                        {!["submitted","screening","under_review","decision_pending"].includes(s.status) && (
+                        {s.status === "accepted" && (
+                          <button type="button" disabled={actionLoading}
+                            onClick={(e) => { e.stopPropagation(); setSelectedMs(s.id); handleWorkflowAction(() => publishSubmission(s.id), "Publish"); }}
+                            className="px-2.5 py-1 text-[11px] font-semibold rounded text-white transition-opacity hover:opacity-80 disabled:opacity-40"
+                            style={{ backgroundColor: "#16A34A" }}>Publish</button>
+                        )}
+                        {!["submitted","screening","under_review","decision_pending","accepted"].includes(s.status) && (
                           <GhostBtn onClick={(e?: React.MouseEvent) => { e?.stopPropagation(); setSelectedMs(s.id); }}>Select</GhostBtn>
                         )}
                       </div>
