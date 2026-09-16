@@ -17,6 +17,10 @@ import SubmissionSuccess from "./portal/SubmissionSuccess";
 import ReviewSuccess from "./portal/ReviewSuccess";
 import PortalStub from "./portal/PortalStub";
 import AuthorRevisions from "./portal/AuthorRevisions";
+import EditorReviewers from "./portal/EditorReviewers";
+import EditorDecisions from "./portal/EditorDecisions";
+import EditorIssues from "./portal/EditorIssues";
+import EditorReports from "./portal/EditorReports";
 import ReviewerCompleted from "./portal/ReviewerCompleted";
 import ReviewerResources from "./portal/ReviewerResources";
 // Journal information pages
@@ -114,12 +118,12 @@ export const router = createBrowserRouter([
           { path: "author/help", Component: RedirectToHelp },
           { path: "editor", Component: EditorDashboard },
           { path: "editor/submissions", Component: EditorDashboard },
-          { path: "editor/reviewers", Component: PortalStub },
-          { path: "editor/decisions", Component: PortalStub },
-          { path: "editor/issues", Component: PortalStub },
+          { path: "editor/reviewers", Component: EditorReviewers },
+          { path: "editor/decisions", Component: EditorDecisions },
+          { path: "editor/issues", Component: EditorIssues },
           { path: "editor/messages", Component: Messages },
           { path: "editor/profile", Component: UserProfile },
-          { path: "editor/reports", Component: PortalStub },
+          { path: "editor/reports", Component: EditorReports },
           { path: "reviewer", Component: ReviewerDashboard },
           { path: "reviewer/assignments", Component: ReviewerDashboard },
           { path: "reviewer/review", Component: ReviewForm },

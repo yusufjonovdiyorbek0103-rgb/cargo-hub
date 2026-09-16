@@ -406,6 +406,67 @@ export async function submitReviewerApplication(data: Record<string, string>) {
   return res.json();
 }
 
+// ── Editor: Review Assignments ──
+
+export async function fetchEditorReviewAssignments(submissionId?: number) {
+  const query = submissionId ? `?submission=${submissionId}` : "";
+  const res = await apiFetch(`/editor/review-assignments/${query}`);
+  if (!res.ok) throw new Error("Failed to fetch review assignments");
+  return res.json();
+}
+
+export async function remindReviewer(assignmentId: number) {
+  const res = await apiFetch(`/editor/review-assignments/${assignmentId}/remind/`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error("Failed to send reminder");
+  return res.json();
+}
+
+// ── Editor: Journal Issues ──
+
+export async function fetchEditorIssues() {
+  const res = await apiFetch("/editor/issues/");
+  if (!res.ok) throw new Error("Failed to fetch issues");
+  return res.json();
+}
+
+export async function fetchEditorIssue(id: number) {
+  const res = await apiFetch(`/editor/issues/${id}/`);
+  if (!res.ok) throw new Error("Failed to fetch issue");
+  return res.json();
+}
+
+export async function createEditorIssue(data: Record<string, unknown>) {
+  const res = await apiFetch("/editor/issues/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || JSON.stringify(err) || "Failed to create issue");
+  }
+  return res.json();
+}
+
+export async function updateEditorIssue(id: number, data: Record<string, unknown>) {
+  const res = await apiFetch(`/editor/issues/${id}/`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || JSON.stringify(err) || "Failed to update issue");
+  }
+  return res.json();
+}
+
+export async function fetchAcceptedSubmissions() {
+  const res = await apiFetch("/editor/issues/accepted-submissions/");
+  if (!res.ok) throw new Error("Failed to fetch accepted submissions");
+  return res.json();
+}
+
 // ── Editorial Board (public) ──
 
 export async function fetchEditorialBoard() {
