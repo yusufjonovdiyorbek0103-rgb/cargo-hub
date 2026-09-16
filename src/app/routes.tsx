@@ -81,7 +81,7 @@ export const router = createBrowserRouter([
           { path: "copyright-fees", Component: CopyrightFees },
           { path: "current-issue", Component: CurrentIssue },
           { path: "archives", Component: Archives },
-          { path: "article", Component: ArticleDetail },
+          { path: "article/:slug", Component: ArticleDetail },
           { path: "articles-in-press", Component: ArticlesInPress },
           { path: "browse", Component: BrowseArticles },
           { path: "reviewer-guidelines", Component: ReviewerGuidelines },

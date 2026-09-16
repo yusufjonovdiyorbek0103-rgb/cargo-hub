@@ -46,12 +46,54 @@ class ContactFormView(APIView):
         return Response({"detail": "Message received. We will get back to you soon."})
 
 
+class ReviewerApplicationView(APIView):
+    """POST /api/reviewer-application/ - Public reviewer application form."""
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        name = (request.data.get("name") or "").strip()
+        email = (request.data.get("email") or "").strip()
+        affiliation = (request.data.get("affiliation") or "").strip()
+
+        if not name or not email:
+            return Response(
+                {"detail": "Name and email are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        fields = [
+            f"Name: {name}",
+            f"Email: {email}",
+            f"Affiliation: {affiliation}",
+            f"Title: {request.data.get('title', '')}",
+            f"Country: {request.data.get('country', '')}",
+            f"ORCID: {request.data.get('orcid', '')}",
+            f"Expertise: {request.data.get('expertise', '')}",
+            f"Motivation: {request.data.get('motivation', '')}",
+        ]
+        body = "\n".join(fields)
+
+        try:
+            send_mail(
+                subject="[CAJAIDT] Reviewer Application",
+                message=body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[settings.DEFAULT_FROM_EMAIL],
+                fail_silently=True,
+            )
+        except Exception:
+            pass
+
+        return Response({"detail": "Application received. We will review your profile and respond shortly."})
+
+
 urlpatterns = [
     path("", api_root),
     path("", include("accounts.urls")),
     path("", include("integrations.urls")),
     path("", include("submissions.urls")),
     path("contact/", ContactFormView.as_view(), name="contact-form"),
+    path("reviewer-application/", ReviewerApplicationView.as_view(), name="reviewer-application"),
     path("certificates/", include("notifications.urls")),
     path("reviewer/", include("reviews.urls")),
     path("editor/", include("editorial.urls")),

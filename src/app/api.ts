@@ -375,6 +375,21 @@ export async function submitContactForm(data: Record<string, string>) {
   return res.json();
 }
 
+// ── Reviewer Application ──
+
+export async function submitReviewerApplication(data: Record<string, string>) {
+  const res = await fetch(`${API_BASE}/reviewer-application/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to submit application");
+  }
+  return res.json();
+}
+
 // ── Editorial Board (public) ──
 
 export async function fetchEditorialBoard() {

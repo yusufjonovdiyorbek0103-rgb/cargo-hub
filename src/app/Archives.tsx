@@ -1,15 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import coverImage from "../imports/image.png";
 import {
   NAVY, GOLD, LIGHT_GRAY, TEXT_GRAY, BORDER_GRAY, SERIF,
   PageBanner, BottomCTA, SectionHeader, QuickLinksSidebar, NavA,
 } from "./shared";
+import { fetchIssues } from "./api";
 
-const ISSUES_2027 = [
-  { vol: 1, issue: 1, month: "To be confirmed", articles: "Articles: Planned", status: "Planned" },
-  { vol: 1, issue: 2, month: "To be confirmed", articles: "Articles: Planned", status: "Planned" },
-  { vol: 1, issue: 3, month: "To be confirmed", articles: "Articles: Planned", status: "Planned" },
+interface IssueItem {
+  id?: number;
+  vol: number;
+  issue: number;
+  month: string;
+  articles: string;
+  status: string;
+  year: number;
+}
+
+const SAMPLE_ISSUES: IssueItem[] = [
+  { vol: 1, issue: 1, month: "To be confirmed", articles: "Articles: Planned", status: "Planned", year: 2027 },
+  { vol: 1, issue: 2, month: "To be confirmed", articles: "Articles: Planned", status: "Planned", year: 2027 },
+  { vol: 1, issue: 3, month: "To be confirmed", articles: "Articles: Planned", status: "Planned", year: 2027 },
 ];
 
 const SIDEBAR_LINKS = [
@@ -21,9 +32,27 @@ const SIDEBAR_LINKS = [
 ];
 
 export default function Archives() {
+  const [issues, setIssues] = useState<IssueItem[]>(SAMPLE_ISSUES);
   const [search, setSearch] = useState("");
   const [year, setYear] = useState("all");
   const [lang, setLang] = useState("all");
+
+  useEffect(() => {
+    fetchIssues()
+      .then((data: { id: number; volume: number; issue_number: number; publication_year: number; article_count?: number; publication_date?: string }[]) => {
+        if (!Array.isArray(data) || data.length === 0) return;
+        setIssues(data.map(d => ({
+          id: d.id,
+          vol: d.volume,
+          issue: d.issue_number,
+          month: d.publication_date || "Published",
+          articles: `Articles: ${d.article_count ?? "—"}`,
+          status: "Published",
+          year: d.publication_year,
+        })));
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <>
@@ -102,7 +131,7 @@ export default function Archives() {
             </div>
 
             <div className="grid sm:grid-cols-3 gap-5 mb-14">
-              {ISSUES_2027.map((iss) => (
+              {issues.map((iss) => (
                 <div
                   key={iss.issue}
                   className="border rounded-xl overflow-hidden flex flex-col hover:shadow-md transition-shadow"

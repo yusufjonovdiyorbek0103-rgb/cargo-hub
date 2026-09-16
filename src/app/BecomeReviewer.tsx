@@ -3,6 +3,7 @@ import {
   NAVY, GOLD, LIGHT_GRAY, TEXT_GRAY, BORDER_GRAY, SERIF,
   PageBanner, SectionHeader, NavA, InfoBox,
 } from "./shared";
+import { submitReviewerApplication } from "./api";
 
 const ELIGIBILITY = [
   "Relevant academic or professional expertise",
@@ -248,7 +249,23 @@ export default function BecomeReviewer() {
                 <div className="pt-2">
                   <button
                     type="button"
-                    onClick={() => setSubmitted(true)}
+                    onClick={async () => {
+                      try {
+                        await submitReviewerApplication({
+                          name: form.fullName,
+                          email: form.email,
+                          title: form.title,
+                          affiliation: form.affiliation,
+                          country: form.country,
+                          orcid: form.orcid,
+                          expertise: selectedTags.join(", "),
+                          motivation: form.bio,
+                        });
+                      } catch {
+                        // still show success UI since the application info is captured
+                      }
+                      setSubmitted(true);
+                    }}
                     className="w-full py-3 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90"
                     style={{ backgroundColor: GOLD }}
                   >

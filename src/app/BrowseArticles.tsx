@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import {
   NAVY, GOLD, LIGHT_GRAY, TEXT_GRAY, BORDER_GRAY, SERIF,
   PageBanner,
 } from "./shared";
 import { ArticleCard, Article } from "./ArticleCard";
+import { fetchArticles } from "./api";
 
-const ALL_ARTICLES: Article[] = [
+const SAMPLE_ARTICLES: Article[] = [
   {
     type: "Research Article",
     title: "Responsible Artificial Intelligence for Digital Transformation in Emerging Economies",
@@ -56,6 +57,24 @@ const ALL_ARTICLES: Article[] = [
     pages: "73–89", doi: "To be assigned", year: 2027, status: "Sample layout",
   },
 ];
+
+function mapApiArticle(a: Record<string, unknown>): Article {
+  const authors = Array.isArray(a.authors)
+    ? (a.authors as { full_name: string }[]).map(au => au.full_name).join(", ")
+    : String(a.authors || "");
+  return {
+    id: String(a.id || ""),
+    type: String(a.article_type || "Research Article"),
+    title: String(a.title || ""),
+    authors,
+    abstract: String(a.abstract || ""),
+    keywords: Array.isArray(a.keywords) ? a.keywords as string[] : [],
+    pages: a.page_start && a.page_end ? `${a.page_start}–${a.page_end}` : undefined,
+    doi: a.doi ? String(a.doi) : "To be assigned",
+    year: a.published_at ? new Date(a.published_at as string).getFullYear() : undefined,
+    status: String(a.status || "published"),
+  };
+}
 
 const ARTICLE_TYPES = [
   "Research Article", "Review Article", "Case Study",
@@ -195,6 +214,8 @@ function FilterPanel({
 }
 
 export default function BrowseArticles() {
+  const [articles, setArticles] = useState<Article[]>(SAMPLE_ARTICLES);
+  const [usingSamples, setUsingSamples] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
@@ -202,13 +223,24 @@ export default function BrowseArticles() {
   const [sortBy, setSortBy] = useState("Newest");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
+  useEffect(() => {
+    fetchArticles()
+      .then((data: Record<string, unknown>[]) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setArticles(data.map(mapApiArticle));
+          setUsingSamples(false);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const toggleType = (t: string) =>
     setSelectedTypes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
 
   const toggleSubject = (s: string) =>
     setSelectedSubjects(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
 
-  const filtered = ALL_ARTICLES.filter(a => {
+  const filtered = articles.filter(a => {
     const matchSearch = !search ||
       a.title.toLowerCase().includes(search.toLowerCase()) ||
       a.authors.toLowerCase().includes(search.toLowerCase()) ||
@@ -310,7 +342,7 @@ export default function BrowseArticles() {
                 </span>
                 {(search || activeFilters > 0) && (
                   <span className="text-xs ml-2" style={{ color: TEXT_GRAY }}>
-                    (filtered from {ALL_ARTICLES.length} total)
+                    (filtered from {articles.length} total)
                   </span>
                 )}
               </div>
@@ -335,7 +367,7 @@ export default function BrowseArticles() {
             {filtered.length > 0 ? (
               <div className="space-y-5">
                 {filtered.map((article, i) => (
-                  <ArticleCard key={i} article={article} to="/article" />
+                  <ArticleCard key={i} article={article} to={article.id ? `/article/${article.id}` : undefined} />
                 ))}
               </div>
             ) : (
@@ -359,9 +391,11 @@ export default function BrowseArticles() {
               </div>
             )}
 
-            <p className="text-[11px] mt-8 text-center" style={{ color: TEXT_GRAY }}>
-              All articles shown are sample placeholders demonstrating the browse interface. Final articles will appear upon publication.
-            </p>
+            {usingSamples && (
+              <p className="text-[11px] mt-8 text-center" style={{ color: TEXT_GRAY }}>
+                All articles shown are sample placeholders demonstrating the browse interface. Final articles will appear upon publication.
+              </p>
+            )}
           </div>
         </div>
       </div>

@@ -1,9 +1,11 @@
+import { useState, useEffect } from "react";
 import { Download } from "lucide-react";
 import coverImage from "../imports/image.png";
 import { NAVY, GOLD, LIGHT_GRAY, TEXT_GRAY, BORDER_GRAY, SERIF, PageBanner, NavA } from "./shared";
 import { ArticleCard, Article } from "./ArticleCard";
+import { fetchIssues, fetchIssueDetail } from "./api";
 
-const ISSUE_ARTICLES: Article[] = [
+const SAMPLE_ARTICLES: Article[] = [
   {
     type: "Research Article",
     title: "Responsible Artificial Intelligence for Digital Transformation in Emerging Economies",
@@ -61,17 +63,70 @@ const ISSUE_ARTICLES: Article[] = [
   },
 ];
 
-const ISSUE_META = [
-  { label: "Volume", value: "1" },
-  { label: "Issue", value: "1" },
-  { label: "Year", value: "2027" },
-  { label: "Publication Month", value: "To be confirmed" },
-  { label: "ISSN", value: "Coming soon" },
-  { label: "DOI Prefix", value: "Planned" },
-  { label: "License", value: "Planned open-access license" },
-];
+function getIssueMeta(d: IssueData) {
+  return [
+    { label: "Volume", value: d.volume },
+    { label: "Issue", value: d.issue },
+    { label: "Year", value: d.year },
+    { label: "Publication Month", value: "To be confirmed" },
+    { label: "ISSN", value: "Coming soon" },
+    { label: "DOI Prefix", value: "Planned" },
+    { label: "License", value: "Planned open-access license" },
+  ];
+}
+
+function mapApiArticle(a: Record<string, unknown>): Article {
+  const authors = Array.isArray(a.authors)
+    ? (a.authors as { full_name: string }[]).map(au => au.full_name).join(", ")
+    : String(a.authors || "");
+  return {
+    id: String(a.id || ""),
+    type: String(a.article_type || "Research Article"),
+    title: String(a.title || ""),
+    authors,
+    abstract: String(a.abstract || ""),
+    keywords: Array.isArray(a.keywords) ? a.keywords as string[] : [],
+    pages: a.page_start && a.page_end ? `${a.page_start}–${a.page_end}` : undefined,
+    doi: a.doi ? String(a.doi) : "To be assigned",
+    year: a.published_at ? new Date(a.published_at as string).getFullYear() : undefined,
+    status: String(a.status || "published"),
+  };
+}
+
+interface IssueData {
+  volume: string;
+  issue: string;
+  year: string;
+  articles: Article[];
+  usingSamples: boolean;
+}
 
 export default function CurrentIssue() {
+  const [data, setData] = useState<IssueData>({
+    volume: "1", issue: "1", year: "2027",
+    articles: SAMPLE_ARTICLES, usingSamples: true,
+  });
+
+  useEffect(() => {
+    fetchIssues()
+      .then(async (issues: { id: number; volume: number; issue_number: number; publication_year: number }[]) => {
+        if (!Array.isArray(issues) || issues.length === 0) return;
+        const latest = issues[0];
+        const detail = await fetchIssueDetail(latest.id);
+        const articles = Array.isArray(detail.articles) && detail.articles.length > 0
+          ? (detail.articles as Record<string, unknown>[]).map(mapApiArticle)
+          : SAMPLE_ARTICLES;
+        setData({
+          volume: String(latest.volume),
+          issue: String(latest.issue_number),
+          year: String(latest.publication_year),
+          articles,
+          usingSamples: articles === SAMPLE_ARTICLES,
+        });
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <>
       <PageBanner
@@ -111,11 +166,11 @@ export default function CurrentIssue() {
             <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: NAVY, fontFamily: SERIF }}>
               Central Asian Journal of Artificial Intelligence and Digital Transformation
             </h2>
-            <p className="text-sm mb-6" style={{ color: TEXT_GRAY }}>Volume 1, Issue 1 · 2027 · Monthly Publication</p>
+            <p className="text-sm mb-6" style={{ color: TEXT_GRAY }}>Volume {data.volume}, Issue {data.issue} · {data.year} · Monthly Publication</p>
 
             {/* Meta grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-7">
-              {ISSUE_META.map(m => (
+              {getIssueMeta(data).map(m => (
                 <div key={m.label} className="rounded-lg p-3" style={{ backgroundColor: LIGHT_GRAY, border: `1px solid ${BORDER_GRAY}` }}>
                   <div className="text-[9px] font-bold uppercase tracking-wider mb-0.5" style={{ color: GOLD }}>{m.label}</div>
                   <div className="text-xs font-semibold leading-snug" style={{ color: NAVY }}>{m.value}</div>
@@ -155,7 +210,7 @@ export default function CurrentIssue() {
         <div className="mb-8 flex items-center justify-between flex-wrap gap-3">
           <div>
             <div className="text-[11px] font-bold tracking-widest uppercase mb-1" style={{ color: GOLD }}>
-              Volume 1, Issue 1, 2027
+              Volume {data.volume}, Issue {data.issue}, {data.year}
             </div>
             <h2 className="text-2xl font-bold" style={{ color: NAVY, fontFamily: SERIF }}>Articles</h2>
           </div>
@@ -172,8 +227,8 @@ export default function CurrentIssue() {
         </div>
 
         <div className="space-y-5">
-          {ISSUE_ARTICLES.map((article, i) => (
-            <ArticleCard key={i} article={article} to="/article" />
+          {data.articles.map((article, i) => (
+            <ArticleCard key={i} article={article} to={article.id ? `/article/${article.id}` : undefined} />
           ))}
         </div>
       </div>

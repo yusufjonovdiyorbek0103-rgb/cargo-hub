@@ -1,8 +1,10 @@
+import { useState, useEffect } from "react";
 import { Mail, Globe, Users } from "lucide-react";
 import {
   NAVY, GOLD, LIGHT_GRAY, TEXT_GRAY, BORDER_GRAY, SERIF,
   PageBanner, BottomCTA, SectionHeader,
 } from "./shared";
+import { fetchEditorialBoard } from "./api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface EditorProfile {
@@ -289,8 +291,49 @@ function EditorialOfficeSidebar() {
   );
 }
 
+interface ApiBoardMember {
+  id: number;
+  name: string;
+  affiliation: string;
+  expertise: string[];
+  email: string;
+  role: string;
+}
+
+function mapApiToProfile(m: ApiBoardMember): EditorProfile {
+  const roleLabels: Record<string, string> = {
+    editor_in_chief: "Editor-in-Chief",
+    managing_editor: "Managing Editor",
+    associate_editor: "Section Editor",
+  };
+  return {
+    role: roleLabels[m.role] || m.role,
+    name: m.name,
+    affiliation: m.affiliation || "—",
+    country: "—",
+    expertise: Array.isArray(m.expertise) ? m.expertise.join(", ") : String(m.expertise || ""),
+    orcid: "—",
+    isLeadership: m.role === "editor_in_chief" || m.role === "managing_editor",
+  };
+}
+
 // ─── Page export ──────────────────────────────────────────────────────────────
 export default function EditorialBoard() {
+  const [leadership, setLeadership] = useState<EditorProfile[]>(LEADERSHIP);
+  const [sectionEditors, setSectionEditors] = useState<EditorProfile[]>(SECTION_EDITORS);
+
+  useEffect(() => {
+    fetchEditorialBoard()
+      .then((data: ApiBoardMember[]) => {
+        if (!Array.isArray(data) || data.length === 0) return;
+        const leaders = data.filter(m => m.role === "editor_in_chief" || m.role === "managing_editor").map(mapApiToProfile);
+        const sections = data.filter(m => m.role === "associate_editor").map(mapApiToProfile);
+        if (leaders.length > 0) setLeadership(leaders);
+        if (sections.length > 0) setSectionEditors(sections);
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <>
       <PageBanner
@@ -312,7 +355,7 @@ export default function EditorialBoard() {
                 subtitle="The Editor-in-Chief and Managing Editor are responsible for the overall academic and operational governance of CAJAIDT."
               />
               <div className="grid gap-5">
-                {LEADERSHIP.map((editor, i) => (
+                {leadership.map((editor, i) => (
                   <LeadershipCard key={i} editor={editor} />
                 ))}
               </div>
@@ -328,7 +371,7 @@ export default function EditorialBoard() {
                 subtitle="Section editors oversee manuscript review and quality within their designated research domains."
               />
               <div className="grid sm:grid-cols-2 gap-4">
-                {SECTION_EDITORS.map((editor, i) => (
+                {sectionEditors.map((editor, i) => (
                   <SectionEditorCard key={i} editor={editor} />
                 ))}
               </div>

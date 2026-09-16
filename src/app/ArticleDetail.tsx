@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams } from "react-router";
 import { FileText, ExternalLink, Copy, Share2, Download, ChevronDown, ChevronUp } from "lucide-react";
 import {
   NAVY, GOLD, LIGHT_GRAY, TEXT_GRAY, BORDER_GRAY, SERIF,
   PageBanner,
 } from "./shared";
 import { ArticleTypeBadge } from "./ArticleCard";
+import { fetchArticle } from "./api";
 
-const ARTICLE = {
+const SAMPLE_ARTICLE = {
   type: "Research Article",
   title: "Responsible Artificial Intelligence for Digital Transformation in Emerging Economies",
   authors: ["Author Name 1", "Author Name 2", "Author Name 3"],
@@ -106,8 +108,51 @@ function ArticleSection({ section }: { section: typeof ARTICLE_SECTIONS[0] }) {
   );
 }
 
+type ArticleData = typeof SAMPLE_ARTICLE;
+
+function mapApiToArticle(api: Record<string, unknown>): ArticleData {
+  const authors = Array.isArray(api.authors)
+    ? (api.authors as { full_name: string; affiliation?: string }[])
+    : [];
+  return {
+    type: String(api.article_type || "Research Article"),
+    title: String(api.title || "Untitled"),
+    authors: authors.map(a => a.full_name),
+    affiliations: authors.map((a, i) => `${i + 1}. ${a.affiliation || "Affiliation not provided"}`),
+    corresponding: "See author details",
+    doi: api.doi ? String(api.doi) : "To be assigned",
+    license: "Planned open-access license",
+    received: api.received_at ? new Date(api.received_at as string).toLocaleDateString() : "—",
+    revised: "—",
+    accepted: api.accepted_at ? new Date(api.accepted_at as string).toLocaleDateString() : "—",
+    published: api.published_at ? new Date(api.published_at as string).toLocaleDateString() : "—",
+    volume: Number(api.volume) || 1,
+    issue: Number(api.issue_number) || 1,
+    year: api.published_at ? new Date(api.published_at as string).getFullYear() : 2027,
+    pages: api.page_start && api.page_end ? `${api.page_start}–${api.page_end}` : "—",
+    abstract: String(api.abstract || ""),
+    keywords: Array.isArray(api.keywords) ? api.keywords as string[] : [],
+  };
+}
+
 export default function ArticleDetail() {
+  const { slug } = useParams();
+  const [article, setArticle] = useState<ArticleData>(SAMPLE_ARTICLE);
   const [citeCopied, setCiteCopied] = useState(false);
+  const [loading, setLoading] = useState(!!slug);
+
+  useEffect(() => {
+    if (!slug) return;
+    setLoading(true);
+    fetchArticle(slug)
+      .then((data) => {
+        setArticle(mapApiToArticle(data as Record<string, unknown>));
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [slug]);
+
+  const ARTICLE = article;
 
   const citation = `${ARTICLE.authors.join(", ")}. ${ARTICLE.year}. ${ARTICLE.title}. Central Asian Journal of Artificial Intelligence and Digital Transformation, ${ARTICLE.volume}(${ARTICLE.issue}), ${ARTICLE.pages}. DOI: ${ARTICLE.doi}.`;
 
@@ -116,6 +161,14 @@ export default function ArticleDetail() {
     setCiteCopied(true);
     setTimeout(() => setCiteCopied(false), 2000);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-sm" style={{ color: TEXT_GRAY }}>Loading article...</div>
+      </div>
+    );
+  }
 
   return (
     <>
