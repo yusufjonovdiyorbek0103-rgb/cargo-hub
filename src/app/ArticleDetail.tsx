@@ -37,11 +37,12 @@ const REFERENCES = [
   "Investigator, R. (2022). Measuring digital readiness in transitional economies. Journal of Information Technology for Development, 28(1), 15–38. DOI: To be added.",
 ];
 
-const ARTICLE_SECTIONS = [
+function buildArticleSections(abstract: string) {
+  return [
   {
     id: "abstract",
     title: "Abstract",
-    content: ARTICLE.abstract,
+    content: abstract,
   },
   {
     id: "introduction",
@@ -89,8 +90,11 @@ const ARTICLE_SECTIONS = [
     content: "[Placeholder] Author Name 1: Conceptualisation, methodology, writing – original draft. Author Name 2: Data curation, formal analysis, writing – review and editing. Author Name 3: Supervision, validation, writing – review and editing.",
   },
 ];
+}
 
-function ArticleSection({ section }: { section: typeof ARTICLE_SECTIONS[0] }) {
+type ArticleSection = { id: string; title: string; content: string };
+
+function ArticleSectionView({ section }: { section: ArticleSection }) {
   return (
     <div id={section.id} className="scroll-mt-28">
       <h2
@@ -153,6 +157,7 @@ export default function ArticleDetail() {
   }, [slug]);
 
   const ARTICLE = article;
+  const ARTICLE_SECTIONS = buildArticleSections(ARTICLE.abstract);
 
   const citation = `${ARTICLE.authors.join(", ")}. ${ARTICLE.year}. ${ARTICLE.title}. Central Asian Journal of Artificial Intelligence and Digital Transformation, ${ARTICLE.volume}(${ARTICLE.issue}), ${ARTICLE.pages}. DOI: ${ARTICLE.doi}.`;
 
@@ -293,8 +298,8 @@ export default function ArticleDetail() {
 
             {/* Article sections */}
             <div className="space-y-10">
-              {ARTICLE_SECTIONS.map(section => (
-                <ArticleSection key={section.id} section={section} />
+              {ARTICLE_SECTIONS.map((section: ArticleSection) => (
+                <ArticleSectionView key={section.id} section={section} />
               ))}
 
               {/* References */}
