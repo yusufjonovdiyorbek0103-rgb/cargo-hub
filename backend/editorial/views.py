@@ -813,10 +813,11 @@ class ReviewerListView(generics.ListAPIView):
     serializer_class = ReviewerOptionSerializer
 
     def get_queryset(self):
+        from django.conf import settings
         qs = User.objects.filter(
             reviewer_status=APPROVAL_APPROVED,
         )
-        try:
-            return qs.filter(roles__contains=[ROLE_REVIEWER])
-        except Exception:
+        db_engine = settings.DATABASES["default"]["ENGINE"]
+        if "sqlite" in db_engine:
             return qs.filter(roles__icontains=ROLE_REVIEWER)
+        return qs.filter(roles__contains=[ROLE_REVIEWER])

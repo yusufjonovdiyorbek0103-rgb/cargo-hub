@@ -20,7 +20,7 @@ from rest_framework.views import APIView
 
 from accounts.permissions import IsAuthor, IsEmailVerified
 
-from .models import STATUS_RESUBMITTED, STATUS_REVISION_REQUIRED, STATUS_SUBMITTED, Submission, SubmissionSupplementaryFile, SubmissionVersion, TopicArea
+from .models import STATUS_DRAFT, STATUS_RESUBMITTED, STATUS_REVISION_REQUIRED, STATUS_SUBMITTED, Submission, SubmissionSupplementaryFile, SubmissionVersion, TopicArea
 from .models import JournalIssue, STATUS_PUBLISHED
 from .serializers import SubmissionSerializer, TopicAreaSerializer
 from .transitions import validate_transition
@@ -66,10 +66,10 @@ class SubmissionViewSet(
         return context
 
     def create(self, request, *args, **kwargs):
-        """POST /api/submissions - Create submission in submitted state."""
+        """POST /api/submissions - Create submission in draft state."""
         serializer = self.get_serializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        submission = serializer.save(author=request.user, status=STATUS_SUBMITTED)
+        submission = serializer.save(author=request.user, status=STATUS_DRAFT)
         from audit.services import log
         log(actor_user=request.user, action_type="submission_created", target_type="submission", target_id=submission.id)
         serializer_out = self.get_serializer(submission)
@@ -97,9 +97,9 @@ class SubmissionViewSet(
     def upload_file(self, request, pk=None):
         """POST /api/submissions/{id}/upload-file - Upload file via form-data (file, file_type)."""
         submission = self.get_object()
-        if submission.status not in (STATUS_SUBMITTED, STATUS_REVISION_REQUIRED):
+        if submission.status not in (STATUS_DRAFT, STATUS_SUBMITTED, STATUS_REVISION_REQUIRED):
             return Response(
-                {"detail": "Files can only be uploaded for submitted or revision_required records."},
+                {"detail": "Files can only be uploaded for draft, submitted, or revision_required records."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -149,9 +149,9 @@ class SubmissionViewSet(
     def submit(self, request, pk=None):
         """POST /api/submissions/{id}/submit - Finalize initial submitted record and create version."""
         submission = self.get_object()
-        if submission.status != STATUS_SUBMITTED:
+        if submission.status not in (STATUS_DRAFT, STATUS_SUBMITTED):
             return Response(
-                {"detail": "Only submitted records can be finalized via this endpoint."},
+                {"detail": "Only draft or submitted records can be finalized via this endpoint."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         if submission.versions.exists():
@@ -167,13 +167,17 @@ class SubmissionViewSet(
             return Response({"detail": msg}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
+            old_status = submission.status
+            submission.status = STATUS_SUBMITTED
+            submission.save(update_fields=["status"])
+
             from audit.services import log
             log(
                 actor_user=request.user,
                 action_type="submission_submitted",
                 target_type="submission",
                 target_id=submission.id,
-                old_value={"status": STATUS_SUBMITTED},
+                old_value={"status": old_status},
                 new_value={"status": STATUS_SUBMITTED},
             )
 

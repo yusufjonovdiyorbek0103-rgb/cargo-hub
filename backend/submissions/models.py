@@ -17,6 +17,7 @@ class TopicArea(models.Model):
 
 
 # Submission status constants
+STATUS_DRAFT = "draft"
 STATUS_SUBMITTED = "submitted"
 STATUS_SCREENING = "screening"
 STATUS_DESK_REJECTED = "desk_rejected"
@@ -30,6 +31,7 @@ STATUS_PUBLISHED = "published"
 STATUS_WITHDRAWN = "withdrawn"
 
 STATUS_CHOICES = [
+    (STATUS_DRAFT, "Draft"),
     (STATUS_SUBMITTED, "Submitted"),
     (STATUS_SCREENING, "Screening"),
     (STATUS_DESK_REJECTED, "Desk Rejected"),
@@ -141,7 +143,7 @@ class Submission(models.Model):
         on_delete=models.CASCADE,
         related_name="submissions",
     )
-    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default=STATUS_SUBMITTED)
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default=STATUS_DRAFT)
 
     # Step 0: Article type & language
     article_type = models.CharField(max_length=30, choices=ARTICLE_TYPE_CHOICES, blank=True)

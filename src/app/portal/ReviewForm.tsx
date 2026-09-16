@@ -244,7 +244,13 @@ export default function ReviewForm() {
             <div className="p-5">
               <FieldLabel required>Recommendation to the editor</FieldLabel>
               <SelectInput
-                options={["accept", "minor_revision", "major_revision", "reject_resubmit", "reject"]}
+                options={[
+                  {value:"accept",label:"Accept"},
+                  {value:"minor_revision",label:"Accept with Minor Revisions"},
+                  {value:"major_revision",label:"Major Revisions"},
+                  {value:"reject_resubmit",label:"Reject and Resubmit"},
+                  {value:"reject",label:"Reject"},
+                ]}
                 placeholder="Select your recommendation..."
                 value={recommendation}
                 onChange={setRecommendation}

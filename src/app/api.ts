@@ -234,20 +234,28 @@ export async function fetchReviewAssignments() {
   return res.json();
 }
 
-export async function acceptAssignment(_id: number, token: string) {
-  const res = await apiFetch(`/reviewer/accept-by-token/`, {
-    method: "POST",
-    body: JSON.stringify({ token }),
-  });
+export async function acceptAssignment(id: number, token?: string) {
+  const res = token
+    ? await apiFetch(`/reviewer/accept-by-token/`, {
+        method: "POST",
+        body: JSON.stringify({ token }),
+      })
+    : await apiFetch(`/reviewer/assignments/${id}/accept/`, {
+        method: "POST",
+      });
   if (!res.ok) throw new Error("Failed to accept assignment");
   return res.json();
 }
 
-export async function declineAssignment(_id: number, token: string) {
-  const res = await apiFetch(`/reviewer/decline-by-token/`, {
-    method: "POST",
-    body: JSON.stringify({ token }),
-  });
+export async function declineAssignment(id: number, token?: string) {
+  const res = token
+    ? await apiFetch(`/reviewer/decline-by-token/`, {
+        method: "POST",
+        body: JSON.stringify({ token }),
+      })
+    : await apiFetch(`/reviewer/assignments/${id}/decline/`, {
+        method: "POST",
+      });
   if (!res.ok) throw new Error("Failed to decline assignment");
   return res.json();
 }
@@ -323,6 +331,14 @@ export async function sendToReview(submissionId: number) {
     method: "POST",
   });
   if (!res.ok) throw new Error("Failed to send to review");
+  return res.json();
+}
+
+export async function moveToDecision(submissionId: number) {
+  const res = await apiFetch(`/editor/submissions/${submissionId}/move-to-decision/`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error("Failed to move to decision");
   return res.json();
 }
 

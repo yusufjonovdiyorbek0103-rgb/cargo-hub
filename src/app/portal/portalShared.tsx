@@ -325,7 +325,7 @@ export function TextArea({ placeholder, rows = 4, value, onChange }: {
 }
 
 export function SelectInput({ options, value, onChange, placeholder }: {
-  options: string[]; value?: string; onChange?: (v: string) => void; placeholder?: string;
+  options: (string | { value: string; label: string })[]; value?: string; onChange?: (v: string) => void; placeholder?: string;
 }) {
   return (
     <select
@@ -335,7 +335,11 @@ export function SelectInput({ options, value, onChange, placeholder }: {
       style={inputStyle}
     >
       {placeholder && <option value="">{placeholder}</option>}
-      {options.map((o) => <option key={o}>{o}</option>)}
+      {options.map((o) => {
+        const val = typeof o === "string" ? o : o.value;
+        const label = typeof o === "string" ? o : o.label;
+        return <option key={val} value={val}>{label}</option>;
+      })}
     </select>
   );
 }

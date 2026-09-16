@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { NavA } from "../shared";
 import { useAuth } from "../AuthContext";
-import { fetchReviewAssignments } from "../api";
+import { fetchReviewAssignments, acceptAssignment, declineAssignment } from "../api";
 import {
   NAVY, GOLD, LIGHT, BORDER, TEXT, SERIF,
   PortalLayout, SummaryCard, StatusBadge,
@@ -53,6 +53,7 @@ export default function ReviewerDashboard() {
   const { user } = useAuth();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     fetchReviewAssignments()
@@ -126,30 +127,56 @@ export default function ReviewerDashboard() {
                         <Td>
                           {a.status === "invited" ? (
                             <div className="flex gap-1.5">
-                              <NavA
-                                to={`/portal/reviewer/review?assignment=${a.id}`}
-                                className="text-[11px] font-bold px-3 py-1.5 rounded text-white transition-opacity hover:opacity-80"
+                              <button
+                                type="button"
+                                disabled={actionLoading}
+                                onClick={async () => {
+                                  setActionLoading(true);
+                                  try {
+                                    await acceptAssignment(a.id);
+                                    const data = await fetchReviewAssignments();
+                                    setAssignments(Array.isArray(data) ? data : data.results || []);
+                                  } catch (e: unknown) {
+                                    alert(e instanceof Error ? e.message : "Failed to accept");
+                                  } finally {
+                                    setActionLoading(false);
+                                  }
+                                }}
+                                className="text-[11px] font-bold px-3 py-1.5 rounded text-white transition-opacity hover:opacity-80 disabled:opacity-40"
                                 style={{ backgroundColor: "#16A34A" }}
                               >
                                 Accept
-                              </NavA>
+                              </button>
                               <button
                                 type="button"
-                                className="text-[11px] font-semibold px-3 py-1.5 rounded border transition-opacity hover:opacity-70"
+                                disabled={actionLoading}
+                                onClick={async () => {
+                                  setActionLoading(true);
+                                  try {
+                                    await declineAssignment(a.id);
+                                    const data = await fetchReviewAssignments();
+                                    setAssignments(Array.isArray(data) ? data : data.results || []);
+                                  } catch (e: unknown) {
+                                    alert(e instanceof Error ? e.message : "Failed to decline");
+                                  } finally {
+                                    setActionLoading(false);
+                                  }
+                                }}
+                                className="text-[11px] font-semibold px-3 py-1.5 rounded border transition-opacity hover:opacity-70 disabled:opacity-40"
                                 style={{ color: "#DC2626", borderColor: "#FCA5A5" }}
                               >
                                 Decline
                               </button>
                             </div>
-                          ) : (
+                          ) : a.status === "accepted" ? (
                             <NavA
                               to={`/portal/reviewer/review?assignment=${a.id}`}
                               className="text-[11px] font-bold px-3 py-1.5 rounded text-white transition-opacity hover:opacity-80"
                               style={{ backgroundColor: GOLD }}
                             >
-                              Continue Review
+                              Write Review
                             </NavA>
-                          )}
+                          ) : null}
                         </Td>
                       </tr>
                     ))}

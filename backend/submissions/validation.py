@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 
 from rest_framework import serializers
 
-from .models import STATUS_REVISION_REQUIRED, STATUS_SUBMITTED
+from .models import STATUS_DRAFT, STATUS_REVISION_REQUIRED, STATUS_SUBMITTED
 
 
 ORCID_PATTERN = re.compile(r"^\d{4}-\d{4}-\d{4}-\d{4}$")
@@ -42,9 +42,9 @@ def _validate_author_profile_requirements(submission):
 
 def validate_submission_ready_for_submit(submission):
     """Validate submission has all required data for submit. Raises ValidationError if not."""
-    if submission.status not in (STATUS_SUBMITTED, STATUS_REVISION_REQUIRED):
+    if submission.status not in (STATUS_DRAFT, STATUS_SUBMITTED, STATUS_REVISION_REQUIRED):
         raise serializers.ValidationError(
-            "Submission can only be finalized from submitted or revision_required status."
+            "Submission can only be finalized from draft, submitted, or revision_required status."
         )
 
     if not all([

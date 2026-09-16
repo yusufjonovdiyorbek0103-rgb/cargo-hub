@@ -16,3 +16,7 @@ EMAIL_BACKEND = env(
 
 # Optional: disable S3 in dev
 USE_S3_STORAGE = False
+
+# Run Celery tasks synchronously in dev (no Redis required)
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True

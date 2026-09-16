@@ -30,13 +30,13 @@ const STEPS = [
 ];
 
 const ARTICLE_TYPES = [
-  "Original Research Article",
-  "Review Article",
-  "Systematic Literature Review",
-  "Case Study",
-  "Technical Note",
-  "Short Communication",
-  "Perspective / Policy Paper",
+  { value: "original_research", label: "Original Research Article" },
+  { value: "review_article", label: "Review Article" },
+  { value: "systematic_review", label: "Systematic Literature Review" },
+  { value: "case_study", label: "Case Study" },
+  { value: "technical_note", label: "Technical Note" },
+  { value: "short_communication", label: "Short Communication" },
+  { value: "perspective", label: "Perspective / Policy Paper" },
 ];
 
 const SUBJECT_AREAS = [
@@ -241,9 +241,10 @@ export default function NewSubmission() {
     setLoading(true);
     setError("");
     try {
+      const kwList = keywords.split(/[,;]/).map((k) => k.trim()).filter(Boolean);
       const data = {
         title, article_type: articleType, language,
-        running_title: runningTitle, abstract, keywords,
+        running_title: runningTitle, abstract, keywords: kwList,
         cover_letter_text: coverLetterText,
         co_authors: coAuthors,
         english_title: englishTitle, english_abstract: englishAbstract,
@@ -274,9 +275,10 @@ export default function NewSubmission() {
     try {
       let sid = submissionId;
       if (!sid) {
+        const kwList2 = keywords.split(/[,;]/).map((k) => k.trim()).filter(Boolean);
         const created = await createSubmission({
           title, article_type: articleType, language,
-          running_title: runningTitle, abstract, keywords,
+          running_title: runningTitle, abstract, keywords: kwList2,
           cover_letter_text: coverLetterText,
           co_authors: coAuthors,
           english_title: englishTitle, english_abstract: englishAbstract,
@@ -350,7 +352,7 @@ export default function NewSubmission() {
               </div>
               <div>
                 <FieldLabel required>Manuscript Language</FieldLabel>
-                <SelectInput options={["English", "Uzbek", "Russian"]} placeholder="Select language..." value={language} onChange={setLanguage} />
+                <SelectInput options={[{value:"en",label:"English"},{value:"uz",label:"Uzbek"},{value:"ru",label:"Russian"}]} placeholder="Select language..." value={language} onChange={setLanguage} />
                 <p className="text-[11px] mt-1.5" style={{ color: TEXT }}>
                   For Uzbek and Russian manuscripts, an English title, abstract, and keywords are required.
                 </p>
@@ -498,8 +500,8 @@ export default function NewSubmission() {
               </p>
               <div className="space-y-3">
                 {[
-                  { label: "Article Type", value: articleType || "—", ok: !!articleType },
-                  { label: "Language", value: language || "—", ok: !!language },
+                  { label: "Article Type", value: ARTICLE_TYPES.find((t) => t.value === articleType)?.label || articleType || "—", ok: !!articleType },
+                  { label: "Language", value: {en:"English",uz:"Uzbek",ru:"Russian"}[language] || language || "—", ok: !!language },
                   { label: "Manuscript Title", value: title || "—", ok: !!title },
                   { label: "Authors", value: coAuthors.map((a) => a.name).filter(Boolean).join(", ") || "—", ok: coAuthors.some((a) => a.name) },
                   { label: "Abstract", value: abstract ? `Completed (${abstract.split(/\s+/).length} words)` : "—", ok: !!abstract },
