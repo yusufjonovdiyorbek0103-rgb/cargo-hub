@@ -55,7 +55,7 @@ class CertificateApiTest(TestCase):
         )
         review = Review.objects.create(
             assignment=assignment,
-            summary="Strong paper",
+            comments_to_authors="Strong paper",
             strengths="Clear methodology",
             weaknesses="Minor formatting",
             confidential_to_editor="",

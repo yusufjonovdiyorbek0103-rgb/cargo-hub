@@ -2,6 +2,10 @@
 from django.utils import timezone
 from rest_framework import serializers
 
+from notifications.serializers import (
+    JournalPublicationCertificateSerializer,
+    ReviewerRecognitionCertificateSerializer,
+)
 from .models import (
     JournalIssue,
     Submission,
@@ -65,6 +69,12 @@ class SubmissionSerializer(serializers.ModelSerializer):
     ethics_approval_file_url = serializers.SerializerMethodField()
     author_name = serializers.CharField(source="author.full_name", read_only=True)
     author_email = serializers.CharField(source="author.email", read_only=True)
+    certificates = ReviewerRecognitionCertificateSerializer(
+        source="recognition_certificates", many=True, read_only=True
+    )
+    journal_certificates = JournalPublicationCertificateSerializer(
+        source="journal_publication_certificates", many=True, read_only=True
+    )
 
     class Meta:
         model = Submission
@@ -109,6 +119,8 @@ class SubmissionSerializer(serializers.ModelSerializer):
             "page_end",
             "author_name",
             "author_email",
+            "certificates",
+            "journal_certificates",
             "created_at",
             "updated_at",
         ]

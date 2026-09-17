@@ -84,7 +84,7 @@ class EditorialWorkflowTest(TestCase):
         )
         review = Review.objects.create(
             assignment=assignment,
-            summary="Good work",
+            comments_to_authors="Good work",
             strengths="Clear method",
             weaknesses="Small issues",
             confidential_to_editor="",
@@ -114,7 +114,7 @@ class EditorialWorkflowTest(TestCase):
         )
         Review.objects.create(
             assignment=assignment,
-            summary="Needs improvements",
+            comments_to_authors="Needs improvements",
             strengths="Topic is useful",
             weaknesses="Weak experiments",
             confidential_to_editor="",

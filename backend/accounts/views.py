@@ -1,5 +1,6 @@
 """Account and auth views."""
 from django.conf import settings
+from django.core.mail import send_mail
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -8,7 +9,12 @@ from rest_framework.views import APIView
 
 from .models import User
 from .serializers import SignupSerializer, UserSerializer
-from .tokens import generate_email_verification_token, verify_email_verification_token
+from .tokens import (
+    generate_email_verification_token,
+    generate_password_reset_token,
+    verify_email_verification_token,
+    verify_password_reset_token,
+)
 from notifications.services import queue_email_verification, queue_profile_updated
 
 
@@ -152,6 +158,85 @@ class ResendVerificationEmailView(APIView):
 
         return Response(
             {"message": "Verification email sent."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class PasswordResetRequestView(APIView):
+    """POST /api/auth/password-reset - Request password reset email."""
+
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        email = (request.data.get("email") or "").strip().lower()
+        if not email:
+            return Response(
+                {"detail": "Email is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        response_msg = {"message": "If an account exists for this email, a password reset link has been sent."}
+
+        try:
+            user = User.objects.get(email__iexact=email)
+        except User.DoesNotExist:
+            return Response(response_msg, status=status.HTTP_200_OK)
+
+        uid, token = generate_password_reset_token(user)
+        frontend_url = getattr(settings, "FRONTEND_URL", request.build_absolute_uri("/")).rstrip("/")
+        reset_url = f"{frontend_url}/reset-password?uid={uid}&token={token}"
+
+        send_mail(
+            subject="Password Reset - CAJAIDT",
+            message=(
+                f"Hello {user.full_name},\n\n"
+                f"You requested a password reset. Click the link below to set a new password:\n\n"
+                f"{reset_url}\n\n"
+                f"This link expires in 24 hours. If you did not request this, ignore this email.\n\n"
+                f"Best regards,\nCAJAIDT Editorial Office"
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=True,
+        )
+
+        return Response(response_msg, status=status.HTTP_200_OK)
+
+
+class PasswordResetConfirmView(APIView):
+    """POST /api/auth/password-reset-confirm - Set new password with token."""
+
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        uid = request.data.get("uid", "")
+        token = request.data.get("token", "")
+        new_password = request.data.get("new_password", "")
+
+        if not uid or not token or not new_password:
+            return Response(
+                {"detail": "uid, token, and new_password are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if len(new_password) < 8:
+            return Response(
+                {"detail": "Password must be at least 8 characters."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = verify_password_reset_token(uid, token)
+        if not user:
+            return Response(
+                {"detail": "Invalid or expired reset link."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.set_password(new_password)
+        user.save(update_fields=["password"])
+
+        return Response(
+            {"message": "Password has been reset successfully. You can now log in."},
             status=status.HTTP_200_OK,
         )
 

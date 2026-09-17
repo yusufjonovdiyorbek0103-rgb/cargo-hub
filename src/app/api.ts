@@ -152,6 +152,32 @@ export function isLoggedIn() {
   return !!accessToken;
 }
 
+export async function requestPasswordReset(email: string) {
+  const res = await fetch(`${API_BASE}/auth/password-reset`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Request failed");
+  }
+  return res.json();
+}
+
+export async function confirmPasswordReset(uid: string, token: string, newPassword: string) {
+  const res = await fetch(`${API_BASE}/auth/password-reset-confirm`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ uid, token, new_password: newPassword }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Reset failed");
+  }
+  return res.json();
+}
+
 // ── Submissions ──
 
 export async function fetchSubmissions() {

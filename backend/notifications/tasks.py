@@ -222,8 +222,8 @@ def send_author_reviewer_recognition_certificate(self, review_id: int):
     )
 
     reviewer_comment_parts = []
-    if review.summary:
-        reviewer_comment_parts.append(f"Summary: {review.summary}")
+    if review.comments_to_authors:
+        reviewer_comment_parts.append(f"Comments: {review.comments_to_authors}")
     if review.strengths:
         reviewer_comment_parts.append(f"Strengths: {review.strengths}")
     if review.weaknesses:

@@ -20,3 +20,11 @@ USE_S3_STORAGE = False
 # Run Celery tasks synchronously in dev (no Redis required)
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
+
+# Disable throttling and pagination in dev (pagination is enabled in prod)
+REST_FRAMEWORK = {
+    **REST_FRAMEWORK,  # noqa: F405
+    "DEFAULT_PAGINATION_CLASS": None,
+    "DEFAULT_THROTTLE_CLASSES": [],
+    "DEFAULT_THROTTLE_RATES": {},
+}

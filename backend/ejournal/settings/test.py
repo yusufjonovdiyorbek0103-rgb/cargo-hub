@@ -9,3 +9,10 @@ DATABASES = {
 }
 
 CELERY_TASK_ALWAYS_EAGER = True  # Run Celery tasks synchronously in tests
+
+REST_FRAMEWORK = {
+    **REST_FRAMEWORK,  # noqa: F405
+    "DEFAULT_PAGINATION_CLASS": None,
+    "DEFAULT_THROTTLE_CLASSES": [],
+    "DEFAULT_THROTTLE_RATES": {},
+}

@@ -19,6 +19,8 @@ EVENT_SUBMISSION_PUBLISHED = "submission_published"
 EVENT_REVIEW_REMINDER = "review_reminder"
 EVENT_EMAIL_VERIFICATION = "email_verification"
 EVENT_PROFILE_UPDATED = "profile_updated"
+EVENT_REVIEWER_APPROVED = "reviewer_approved"
+EVENT_EDITOR_APPROVED = "editor_approved"
 
 EVENT_CHOICES = [
     (EVENT_SUBMISSION_SUBMITTED, "Submission Submitted"),
@@ -34,6 +36,8 @@ EVENT_CHOICES = [
     (EVENT_REVIEW_REMINDER, "Review Reminder"),
     (EVENT_EMAIL_VERIFICATION, "Email Verification"),
     (EVENT_PROFILE_UPDATED, "Profile Updated"),
+    (EVENT_REVIEWER_APPROVED, "Reviewer Approved"),
+    (EVENT_EDITOR_APPROVED, "Editor Approved"),
 ]
 
 STATUS_QUEUED = "queued"

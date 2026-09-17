@@ -67,7 +67,7 @@ class ReviewerCertificateTaskTest(TestCase):
     def test_task_sends_email_with_pdf_attachment_for_accept(self):
         review = Review.objects.create(
             assignment=self.assignment,
-            summary="Excellent",
+            comments_to_authors="Excellent",
             strengths="Novel and clear",
             weaknesses="Minor typos",
             confidential_to_editor="",
@@ -99,7 +99,7 @@ class ReviewerCertificateTaskTest(TestCase):
     def test_task_skips_when_editor_decision_is_not_accept(self):
         review = Review.objects.create(
             assignment=self.assignment,
-            summary="Not enough",
+            comments_to_authors="Not enough",
             strengths="Interesting problem",
             weaknesses="Insufficient experiments",
             confidential_to_editor="",

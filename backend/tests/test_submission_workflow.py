@@ -43,11 +43,11 @@ class SubmissionWorkflowTest(TestCase):
     def _login(self, user):
         self.client.force_authenticate(user=user)
 
-    def test_create_submission_defaults_to_submitted(self):
+    def test_create_submission_defaults_to_draft(self):
         self._login(self.author)
         resp = self.client.post("/api/submissions/", {})
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(resp.data["status"], "submitted")
+        self.assertEqual(resp.data["status"], "draft")
         self.assertEqual(Submission.objects.filter(author=self.author).count(), 1)
 
     def test_submit_without_required_fields_fails(self):

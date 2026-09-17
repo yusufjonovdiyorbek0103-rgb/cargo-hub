@@ -4,6 +4,8 @@ import Root from "./Root";
 import Home from "./Home";
 // Portal pages
 import Login from "./portal/Login";
+import ForgotPassword from "./portal/ForgotPassword";
+import ResetPassword from "./portal/ResetPassword";
 import AuthorDashboard from "./portal/AuthorDashboard";
 import NewSubmission from "./portal/NewSubmission";
 import SubmissionDetail from "./portal/SubmissionDetail";
@@ -103,6 +105,8 @@ export const router = createBrowserRouter([
       // Portal: login is public, dashboards require auth
       { path: "/portal", Component: Login },
       { path: "/portal/login", Component: Login },
+      { path: "/portal/forgot-password", Component: ForgotPassword },
+      { path: "/reset-password", Component: ResetPassword },
       {
         path: "/portal",
         Component: PortalGuard,

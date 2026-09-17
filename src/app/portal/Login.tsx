@@ -216,9 +216,9 @@ export default function Login() {
                 <label className="flex items-center gap-2 text-[12px] cursor-pointer" style={{ color: TEXT }}>
                   <input type="checkbox" className="rounded" /> Remember me
                 </label>
-                <a href="#" className="text-[12px] hover:underline" style={{ color: GOLD }}>
+                <NavA to="/portal/forgot-password" className="text-[12px] hover:underline" style={{ color: GOLD }}>
                   Forgot password?
-                </a>
+                </NavA>
               </div>
 
               <button
