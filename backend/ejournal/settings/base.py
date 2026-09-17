@@ -114,6 +114,10 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# Frontend SPA serving
+SERVE_FRONTEND = env.bool("SERVE_FRONTEND", default=False)
+FRONTEND_DIST_DIR = BASE_DIR.parent / "dist"
+
 # Media files
 MEDIA_URL = "media/"
 MEDIA_ROOT = env("MEDIA_ROOT", default=str(BASE_DIR / "media"))
@@ -203,7 +207,7 @@ EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5173")
 
 # CORS (for frontend)
-CORS_ALLOWED_ORIGINS = env.list(
+_cors_origins = env.list(
     "CORS_ALLOWED_ORIGINS",
     default=[
         "http://localhost:5173",
@@ -212,6 +216,7 @@ CORS_ALLOWED_ORIGINS = env.list(
         "http://127.0.0.1:3000",
     ],
 )
+CORS_ALLOWED_ORIGINS = [o for o in _cors_origins if o]
 CORS_ALLOW_CREDENTIALS = True
 
 # CSRF trusted origins (for admin and POST requests)
