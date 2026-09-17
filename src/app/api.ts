@@ -364,6 +364,12 @@ export async function fetchArticle(slug: string) {
   return res.json();
 }
 
+export async function fetchArticlesInPress() {
+  const res = await fetch(`${API_BASE}/articles/in-press/`);
+  if (!res.ok) throw new Error("Failed to fetch articles in press");
+  return res.json();
+}
+
 export async function fetchIssues() {
   const res = await fetch(`${API_BASE}/published/issues/`);
   if (!res.ok) throw new Error("Failed to fetch issues");

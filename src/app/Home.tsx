@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   FileText, Download, Globe,
   CheckCircle, ArrowRight, Cpu, Eye,
@@ -7,6 +8,7 @@ import {
 } from "lucide-react";
 import coverImage from "../imports/image.png";
 import { logoMasthead, JournalEmblem, NavA, NAVY, GOLD, LIGHT_GRAY, TEXT_GRAY, BORDER_GRAY, SERIF } from "./shared";
+import { fetchArticles } from "./api";
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 const HERO_BADGES = [
@@ -232,34 +234,77 @@ function AimsScopeSection() {
 }
 
 // ─── Current Issue ────────────────────────────────────────────────────────────
-const SAMPLE_ARTICLES = [
+const ARTICLE_TYPE_LABELS: Record<string, string> = {
+  original_research: "Research Article",
+  review_article: "Review Article",
+  short_communication: "Short Communication",
+  case_study: "Case Study",
+  technical_note: "Technical Note",
+  perspective: "Perspective",
+};
+
+interface HomeArticle {
+  type: string;
+  title: string;
+  authors: string;
+  abstract: string;
+  doi: string;
+  slug?: string;
+  pdfUrl?: string;
+}
+
+const FALLBACK_ARTICLES: HomeArticle[] = [
   {
     type: "Research Article",
     title: "Responsible Artificial Intelligence for Digital Transformation in Emerging Economies",
     authors: "A. Karimov, B. Yusupova, C. Rakhimov",
-    abstract:
-      "This paper examines frameworks for responsible AI deployment in emerging economies, with emphasis on governance structures, ethical guidelines, and sociotechnical considerations for digital transformation initiatives.",
+    abstract: "This paper examines frameworks for responsible AI deployment in emerging economies, with emphasis on governance structures, ethical guidelines, and sociotechnical considerations for digital transformation initiatives.",
     doi: "10.12345/cajaidt.2027.001",
   },
   {
     type: "Research Article",
     title: "Machine Learning-Based Decision Support Systems for Smart Public Services",
     authors: "D. Nazarov, E. Sultanova, F. Tashkentov",
-    abstract:
-      "We propose a machine learning framework for optimizing public service delivery in smart city contexts, demonstrating efficiency improvements across healthcare, transportation, and administrative services.",
+    abstract: "We propose a machine learning framework for optimizing public service delivery in smart city contexts, demonstrating efficiency improvements across healthcare, transportation, and administrative services.",
     doi: "10.12345/cajaidt.2027.002",
   },
   {
     type: "Review Article",
     title: "Human-Centered AI and UX Analytics in Digital Learning Platforms",
     authors: "G. Mirzaev, H. Umarov, I. Ergasheva",
-    abstract:
-      "A systematic review synthesizing current research on human-centered AI applied to educational technology, analyzing UX analytics methodologies across 47 peer-reviewed digital learning platform studies.",
+    abstract: "A systematic review synthesizing current research on human-centered AI applied to educational technology, analyzing UX analytics methodologies across 47 peer-reviewed digital learning platform studies.",
     doi: "10.12345/cajaidt.2027.003",
   },
 ];
 
+function mapApiToHomeArticle(a: Record<string, unknown>): HomeArticle {
+  const authors = Array.isArray(a.authors)
+    ? (a.authors as { full_name: string }[]).map((au) => au.full_name).join(", ")
+    : String(a.author_name || "Unknown Author");
+  return {
+    type: ARTICLE_TYPE_LABELS[String(a.article_type || "")] || String(a.article_type || "Research Article"),
+    title: String(a.title || "Untitled"),
+    authors,
+    abstract: String(a.abstract || "").slice(0, 250) + (String(a.abstract || "").length > 250 ? "..." : ""),
+    doi: a.doi ? String(a.doi) : "Pending",
+    slug: String(a.slug || a.id || ""),
+    pdfUrl: a.pdf_public_url ? String(a.pdf_public_url) : undefined,
+  };
+}
+
 function CurrentIssueSection() {
+  const [articles, setArticles] = useState<HomeArticle[]>(FALLBACK_ARTICLES);
+
+  useEffect(() => {
+    fetchArticles()
+      .then((data: Record<string, unknown>[]) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setArticles(data.slice(0, 3).map(mapApiToHomeArticle));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <section id="current-issue" className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -287,7 +332,7 @@ function CurrentIssueSection() {
           </div>
           <div className="flex-1 p-7 md:p-10">
             <div className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: GOLD }}>
-              Volume 1, Issue 1 · January 2027
+              Volume 1, Issue 1 · 2027
             </div>
             <h3 className="text-xl md:text-2xl font-bold mb-3" style={{ color: NAVY, fontFamily: SERIF }}>
               Central Asian Journal of Artificial Intelligence and Digital Transformation
@@ -315,9 +360,10 @@ function CurrentIssueSection() {
         </div>
         {/* Article cards */}
         <div className="grid md:grid-cols-3 gap-6">
-          {SAMPLE_ARTICLES.map((article, i) => (
-            <div
-              key={i}
+          {articles.map((article, i) => (
+            <NavA
+              key={article.slug || i}
+              to={article.slug ? `/article/${article.slug}` : "/browse"}
               className="border rounded-lg overflow-hidden flex flex-col transition-shadow hover:shadow-md"
               style={{ borderColor: BORDER_GRAY }}
             >
@@ -340,30 +386,25 @@ function CurrentIssueSection() {
                 <p className="text-[11px] leading-relaxed mb-3" style={{ color: TEXT_GRAY }}>
                   {article.abstract}
                 </p>
-                <p className="text-[10px] font-mono" style={{ color: TEXT_GRAY, opacity: 0.7 }}>
-                  DOI: {article.doi}
-                </p>
+                {article.doi && (
+                  <p className="text-[10px] font-mono" style={{ color: TEXT_GRAY, opacity: 0.7 }}>
+                    DOI: {article.doi}
+                  </p>
+                )}
               </div>
               <div
                 className="px-5 py-3 border-t flex gap-2"
                 style={{ borderColor: BORDER_GRAY, backgroundColor: LIGHT_GRAY }}
               >
-                <button
-                  className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded text-white transition-opacity hover:opacity-80"
+                <span
+                  className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded text-white"
                   style={{ backgroundColor: NAVY }}
                 >
                   <FileText size={11} />
-                  PDF
-                </button>
-                <button
-                  className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded border transition-opacity hover:opacity-70"
-                  style={{ color: NAVY, borderColor: BORDER_GRAY, backgroundColor: "white" }}
-                >
-                  <ExternalLink size={11} />
-                  HTML
-                </button>
+                  Read Article
+                </span>
               </div>
-            </div>
+            </NavA>
           ))}
         </div>
       </div>

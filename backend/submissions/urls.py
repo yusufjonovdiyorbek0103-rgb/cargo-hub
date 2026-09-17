@@ -5,6 +5,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     ArticleDetailView,
     ArticleListView,
+    ArticlesInPressView,
     PublishedIssueDetailView,
     PublishedIssueListView,
     ScholarArticleIndexView,
@@ -25,6 +26,7 @@ urlpatterns = [
     path("scholar/sitemap.xml", ScholarSitemapView.as_view(), name="scholar-sitemap"),
     path("scholar/robots.txt", ScholarRobotsTxtView.as_view(), name="scholar-robots"),
     path("articles/", ArticleListView.as_view(), name="article-list"),
+    path("articles/in-press/", ArticlesInPressView.as_view(), name="articles-in-press"),
     path("articles/<slug:slug>/", ArticleDetailView.as_view(), name="article-detail"),
     path("published/issues/", PublishedIssueListView.as_view(), name="published-issue-list"),
     path("published/issues/<int:issue_id>/", PublishedIssueDetailView.as_view(), name="published-issue-detail"),

@@ -21,7 +21,7 @@ from rest_framework.views import APIView
 from accounts.permissions import IsAuthor, IsEmailVerified
 
 from .models import STATUS_DRAFT, STATUS_RESUBMITTED, STATUS_REVISION_REQUIRED, STATUS_SUBMITTED, Submission, SubmissionSupplementaryFile, SubmissionVersion, TopicArea
-from .models import JournalIssue, STATUS_PUBLISHED
+from .models import JournalIssue, STATUS_ACCEPTED, STATUS_PUBLISHED
 from .serializers import SubmissionSerializer, TopicAreaSerializer
 from .transitions import validate_transition
 from .validation import validate_submission_ready_for_submit
@@ -340,6 +340,21 @@ class ArticleListView(APIView):
     def get(self, request, *args, **kwargs):
         queryset = (
             Submission.objects.filter(status=STATUS_PUBLISHED)
+            .select_related("author", "topic_area", "issue")
+            .order_by("-updated_at")
+        )
+        payload = [_public_article_payload(submission, request) for submission in queryset]
+        return Response(payload, status=status.HTTP_200_OK)
+
+
+class ArticlesInPressView(APIView):
+    """GET /api/articles/in-press/ - Public list of accepted (not yet published) submissions."""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        queryset = (
+            Submission.objects.filter(status=STATUS_ACCEPTED)
             .select_related("author", "topic_area", "issue")
             .order_by("-updated_at")
         )

@@ -82,7 +82,7 @@ export default function Contact() {
       await submitContactForm(form);
       setSubmitted(true);
     } catch {
-      setSubmitted(true);
+      alert("Failed to send message. Please try again or email us directly.");
     }
   };
 

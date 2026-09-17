@@ -1,40 +1,46 @@
+import { useEffect, useState } from "react";
 import {
   NAVY, GOLD, LIGHT_GRAY, TEXT_GRAY, BORDER_GRAY, SERIF,
   PageBanner, BottomCTA, InfoBox, QuickLinksSidebar,
 } from "./shared";
 import { InPressCard, Article } from "./ArticleCard";
+import { fetchArticlesInPress } from "./api";
 
-const IN_PRESS_ARTICLES: Article[] = [
+const ARTICLE_TYPE_LABELS: Record<string, string> = {
+  original_research: "Research Article",
+  review_article: "Review Article",
+  short_communication: "Short Communication",
+  case_study: "Case Study",
+  technical_note: "Technical Note",
+  perspective: "Perspective / Policy Paper",
+  editorial: "Editorial",
+  letter: "Letter to Editor",
+  book_review: "Book Review",
+};
+
+function mapApiArticle(a: Record<string, unknown>): Article {
+  const authors = Array.isArray(a.authors)
+    ? (a.authors as { full_name: string }[]).map((au) => au.full_name).join(", ")
+    : String(a.author_name || "Unknown Author");
+  return {
+    id: String(a.slug || a.id || ""),
+    type: ARTICLE_TYPE_LABELS[String(a.article_type || "")] || String(a.article_type || "Research Article"),
+    title: String(a.title || "Untitled"),
+    authors,
+    abstract: String(a.abstract || ""),
+    doi: a.doi ? String(a.doi) : "To be assigned",
+    keywords: Array.isArray(a.keywords) ? a.keywords as string[] : [],
+    inpressStatus: "Accepted",
+  };
+}
+
+const SAMPLE_ARTICLES: Article[] = [
   {
     type: "Research Article",
     title: "AI-Driven Decision Support for Digital Public Services",
     authors: "Author Name, Author Name",
-    abstract: "This study examines the design and evaluation of AI-driven decision support systems for digital public service delivery. Findings demonstrate improvements in processing efficiency, citizen satisfaction, and resource allocation across three pilot government service contexts.",
+    abstract: "This study examines the design and evaluation of AI-driven decision support systems for digital public service delivery.",
     inpressStatus: "In production",
-    doi: "To be assigned",
-  },
-  {
-    type: "Review Article",
-    title: "Trends in Human-Centered Artificial Intelligence Research",
-    authors: "Author Name, Author Name",
-    abstract: "A systematic review of human-centered AI research published between 2018 and 2024, examining methodological approaches, thematic developments, and research gaps in the field of AI design for human benefit.",
-    inpressStatus: "Copyediting",
-    doi: "To be assigned",
-  },
-  {
-    type: "Technical Note",
-    title: "A Lightweight Framework for Educational Data Analytics",
-    authors: "Author Name, Author Name",
-    abstract: "This technical note describes a lightweight, modular framework for educational data analytics applicable to resource-constrained institutional environments. The framework is validated through deployment in three higher education settings.",
-    inpressStatus: "Production",
-    doi: "To be assigned",
-  },
-  {
-    type: "Case Study",
-    title: "Digital Transformation Practices in University Administration",
-    authors: "Author Name, Author Name",
-    abstract: "An evidence-based case study examining digital transformation practices and outcomes across administrative functions in a Central Asian university context, with a focus on process automation, data governance, and change management.",
-    inpressStatus: "Issue assignment pending",
     doi: "To be assigned",
   },
 ];
@@ -47,6 +53,20 @@ const SIDEBAR_LINKS = [
 ];
 
 export default function ArticlesInPress() {
+  const [articles, setArticles] = useState<Article[]>(SAMPLE_ARTICLES);
+  const [usingSamples, setUsingSamples] = useState(true);
+
+  useEffect(() => {
+    fetchArticlesInPress()
+      .then((data: Record<string, unknown>[]) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setArticles(data.map(mapApiArticle));
+          setUsingSamples(false);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <>
       <PageBanner
@@ -65,10 +85,10 @@ export default function ArticlesInPress() {
 
             <div className="mt-8 mb-5 flex items-center justify-between">
               <h2 className="text-lg font-bold" style={{ color: NAVY, fontFamily: SERIF }}>
-                {IN_PRESS_ARTICLES.length} Articles in Press
+                {articles.length} Article{articles.length !== 1 ? "s" : ""} in Press
               </h2>
               <div className="flex gap-2 text-[10px]">
-                {["In production", "Copyediting", "Issue assignment pending"].map(s => (
+                {["Accepted", "In production", "Copyediting"].map(s => (
                   <span
                     key={s}
                     className="px-2 py-1 rounded font-semibold"
@@ -80,20 +100,28 @@ export default function ArticlesInPress() {
               </div>
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-5">
-              {IN_PRESS_ARTICLES.map((article, i) => (
-                <InPressCard key={i} article={article} to="/article" />
-              ))}
-            </div>
+            {articles.length === 0 ? (
+              <div className="text-center py-12 rounded-xl border" style={{ borderColor: BORDER_GRAY }}>
+                <p className="text-sm" style={{ color: TEXT_GRAY }}>No articles currently in press.</p>
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-5">
+                {articles.map((article, i) => (
+                  <InPressCard key={article.id || i} article={article} to={article.id ? `/article/${article.id}` : "/article"} />
+                ))}
+              </div>
+            )}
 
-            <div
-              className="mt-8 rounded-xl p-5"
-              style={{ backgroundColor: LIGHT_GRAY, border: `1px solid ${BORDER_GRAY}` }}
-            >
-              <p className="text-[12px] leading-relaxed" style={{ color: TEXT_GRAY }}>
-                <strong style={{ color: NAVY }}>Note:</strong> Article titles, authors, and abstracts above are placeholder samples demonstrating the Articles in Press layout. Content will be updated when real manuscripts are accepted.
-              </p>
-            </div>
+            {usingSamples && (
+              <div
+                className="mt-8 rounded-xl p-5"
+                style={{ backgroundColor: LIGHT_GRAY, border: `1px solid ${BORDER_GRAY}` }}
+              >
+                <p className="text-[12px] leading-relaxed" style={{ color: TEXT_GRAY }}>
+                  <strong style={{ color: NAVY }}>Note:</strong> Showing sample data. Articles will appear here automatically when manuscripts are accepted through the peer review process.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="lg:col-span-1">
@@ -104,7 +132,6 @@ export default function ArticlesInPress() {
                 primaryAction={{ label: "Submit Manuscript", href: "/submit" }}
               />
 
-              {/* Status legend */}
               <div className="rounded-xl border overflow-hidden" style={{ borderColor: BORDER_GRAY }}>
                 <div className="px-5 py-4" style={{ backgroundColor: LIGHT_GRAY }}>
                   <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: NAVY }}>Status Guide</h3>

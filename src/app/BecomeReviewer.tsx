@@ -262,7 +262,8 @@ export default function BecomeReviewer() {
                           motivation: form.bio,
                         });
                       } catch {
-                        // still show success UI since the application info is captured
+                        alert("Failed to submit application. Please try again.");
+                        return;
                       }
                       setSubmitted(true);
                     }}
