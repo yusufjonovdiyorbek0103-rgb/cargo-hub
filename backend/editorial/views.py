@@ -19,7 +19,7 @@ from reportlab.pdfgen import canvas
 
 from accounts.models import APPROVAL_APPROVED, ROLE_REVIEWER, User
 from accounts.permissions import IsApprovedEditor
-from reviews.models import ReviewAssignment, STATUS_INVITED
+from reviews.models import ReviewAssignment, STATUS_INVITED, STATUS_ACCEPTED
 from submissions.models import (
     JournalIssue,
     STATUS_ACCEPTED,
@@ -567,9 +567,22 @@ class EditorialReviewAssignmentViewSet(viewsets.ViewSet):
 
     permission_classes = [IsApprovedEditor]
 
+    def list(self, request):
+        """GET /api/editor/review-assignments/ - List all review assignments."""
+        from reviews.serializers import ReviewAssignmentSerializer
+
+        qs = ReviewAssignment.objects.select_related(
+            "submission", "submission__topic_area", "reviewer",
+        ).order_by("-invited_at")
+        submission_id = request.query_params.get("submission")
+        if submission_id:
+            qs = qs.filter(submission_id=submission_id)
+        serializer = ReviewAssignmentSerializer(qs, many=True, context={"request": request})
+        return Response(serializer.data)
+
     @action(detail=True, methods=["post"])
     def remind(self, request, pk=None):
-        """POST /api/editor/review-assignments/{id}/remind - Stub (Phase 6 will send email)."""
+        """POST /api/editor/review-assignments/{id}/remind - Send reminder email."""
         assignment = ReviewAssignment.objects.filter(id=pk).select_related("submission").first()
         if not assignment:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)

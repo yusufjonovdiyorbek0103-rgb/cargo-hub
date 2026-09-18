@@ -338,7 +338,7 @@ export default function NewSubmission() {
 
       const result = await submitSubmission(sid);
       setManuscriptId(result.manuscript_id || manuscriptId);
-      navigate("/portal/author/submission-success");
+      navigate("/portal/author/submission-success", { state: { manuscriptId: result.manuscript_id || manuscriptId } });
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Submission failed");
     } finally {

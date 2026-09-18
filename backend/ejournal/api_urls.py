@@ -1,6 +1,8 @@
 """
 API URL routes.
 """
+import logging
+
 from django.core.mail import send_mail
 from django.conf import settings
 from django.http import JsonResponse
@@ -9,6 +11,8 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+logger = logging.getLogger(__name__)
 
 
 def api_root(request):
@@ -32,16 +36,13 @@ class ContactFormView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        try:
-            send_mail(
-                subject=f"[CAJAIDT Contact] {subject or 'General Inquiry'}",
-                message=f"From: {name} <{email}>\n\n{message}",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[settings.DEFAULT_FROM_EMAIL],
-                fail_silently=True,
-            )
-        except Exception:
-            pass
+        send_mail(
+            subject=f"[CAJAIDT Contact] {subject or 'General Inquiry'}",
+            message=f"From: {name} <{email}>\n\n{message}",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[settings.DEFAULT_FROM_EMAIL],
+            fail_silently=True,
+        )
 
         return Response({"detail": "Message received. We will get back to you soon."})
 
@@ -73,16 +74,13 @@ class ReviewerApplicationView(APIView):
         ]
         body = "\n".join(fields)
 
-        try:
-            send_mail(
-                subject="[CAJAIDT] Reviewer Application",
-                message=body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[settings.DEFAULT_FROM_EMAIL],
-                fail_silently=True,
-            )
-        except Exception:
-            pass
+        send_mail(
+            subject="[CAJAIDT] Reviewer Application",
+            message=body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[settings.DEFAULT_FROM_EMAIL],
+            fail_silently=True,
+        )
 
         return Response({"detail": "Application received. We will review your profile and respond shortly."})
 

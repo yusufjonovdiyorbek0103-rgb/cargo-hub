@@ -1,9 +1,11 @@
 import { CheckCircle } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { NAVY, GOLD, LIGHT, BORDER, TEXT, SERIF } from "./portalShared";
 
 export default function SubmissionSuccess() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const manuscriptId = (location.state as { manuscriptId?: string })?.manuscriptId || "—";
 
   return (
     <div
@@ -40,7 +42,7 @@ export default function SubmissionSuccess() {
           </div>
           <div className="divide-y" style={{ divideColor: BORDER }}>
             {[
-              { label: "Manuscript ID", value: "CAJAIDT-2027-XXX", mono: true },
+              { label: "Manuscript ID", value: manuscriptId, mono: true },
               { label: "Status", value: "Submitted" },
               { label: "Next Step", value: "Technical Check" },
               { label: "Editorial Response", value: "Usually within 5–7 working days" },
