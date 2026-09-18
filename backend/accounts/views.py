@@ -29,10 +29,15 @@ class SignupView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
-        token = generate_email_verification_token(user)
-        frontend_url = getattr(settings, "FRONTEND_URL", request.build_absolute_uri("/")).rstrip("/")
-        verification_url = f"{frontend_url}/verify-email?token={token}"
-        queue_email_verification(user.id, user.email, verification_url)
+        is_console_email = "console" in settings.EMAIL_BACKEND
+        if is_console_email:
+            user.is_email_verified = True
+            user.save(update_fields=["is_email_verified"])
+        else:
+            token = generate_email_verification_token(user)
+            frontend_url = getattr(settings, "FRONTEND_URL", request.build_absolute_uri("/")).rstrip("/")
+            verification_url = f"{frontend_url}/verify-email?token={token}"
+            queue_email_verification(user.id, user.email, verification_url)
 
         return Response(
             {
@@ -42,7 +47,7 @@ class SignupView(generics.CreateAPIView):
                 "roles": user.roles,
                 "reviewer_status": user.reviewer_status,
                 "editor_status": user.editor_status,
-                "message": "Account created. Check your email to verify your address, then use /api/auth/login to obtain tokens.",
+                "message": "Account created." if is_console_email else "Account created. Check your email to verify your address.",
             },
             status=status.HTTP_201_CREATED,
         )
