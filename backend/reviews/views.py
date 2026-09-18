@@ -3,6 +3,7 @@
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -24,6 +25,7 @@ class ReviewAssignmentViewSet(viewsets.ReadOnlyModelViewSet):
 
     permission_classes = [IsAuthenticated, IsApprovedReviewer]
     serializer_class = ReviewAssignmentSerializer
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
 
     def get_queryset(self):
         user = self.request.user
@@ -107,8 +109,14 @@ class ReviewAssignmentViewSet(viewsets.ReadOnlyModelViewSet):
 
         review = Review.objects.create(
             assignment=assignment,
+            submitted_at=timezone.now(),
             **serializer.validated_data,
         )
+
+        review_file = request.FILES.get("review_file")
+        if review_file:
+            review.review_file.save(review_file.name, review_file, save=True)
+
         assignment.status = STATUS_REVIEW_SUBMITTED
         assignment.save(update_fields=["status"])
         from audit.services import log

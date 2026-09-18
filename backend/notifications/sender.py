@@ -9,7 +9,7 @@ def get_sender_name() -> str:
     return (
         getattr(settings, "DEFAULT_FROM_NAME", None)
         or getattr(settings, "JOURNAL_NAME", None)
-        or "Ditech Asia"
+        or "CAJAIDT"
     )
 
 

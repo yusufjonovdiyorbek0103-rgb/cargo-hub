@@ -321,13 +321,13 @@ def build_journal_publication_certificate_pdf(
         if publication_date
         else str(publication_year)
     )
-    journal_name = getattr(settings, "JOURNAL_NAME", "Ditech Asia")
+    journal_name = getattr(settings, "JOURNAL_NAME", "CAJAIDT")
     journal_long_name = getattr(
         settings,
         "JOURNAL_FULL_NAME",
-        "International Journal for Research in Applied Science and Engineering Technology",
+        "Central Asian Journal of Artificial Intelligence and Digital Transformation",
     )
-    journal_issn = getattr(settings, "JOURNAL_ISSN", "2321-9653")
+    journal_issn = getattr(settings, "JOURNAL_ISSN", "")
 
     author_full_name = (author_full_name or "Author").strip()
     article_title = (article_title or "Untitled article").strip()
@@ -421,7 +421,7 @@ def build_journal_publication_certificate_pdf(
     pdf.setFont("Helvetica", 9.5)
     footer_left = 24 * mm
     pdf.drawString(footer_left, 20 * mm, f"Journal: {journal_name}")
-    pdf.drawString(footer_left, 15 * mm, "Publisher: Ditech Asia Editorial System")
+    pdf.drawString(footer_left, 15 * mm, f"Publisher: {journal_name} Editorial System")
     pdf.drawString(footer_left, 10 * mm, f"Certificate code: {certificate_code or 'N/A'}")
 
     pdf.showPage()

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { useAuth } from "../AuthContext";
-import { updateProfile } from "../api";
+import { changePassword, updateProfile } from "../api";
 import {
   NAVY, GOLD, LIGHT, BORDER, TEXT, SERIF,
   PortalLayout, Card, CardHeader, PrimaryBtn, FieldLabel, SidebarItem,
@@ -73,6 +73,30 @@ export default function UserProfile() {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwError, setPwError] = useState("");
+  const [pwSuccess, setPwSuccess] = useState(false);
+
+  const handleChangePassword = async () => {
+    setPwError("");
+    if (!currentPw || !newPw) { setPwError("All fields are required."); return; }
+    if (newPw !== confirmPw) { setPwError("New passwords do not match."); return; }
+    if (newPw.length < 8) { setPwError("Password must be at least 8 characters."); return; }
+    setPwSaving(true);
+    try {
+      await changePassword(currentPw, newPw);
+      setPwSuccess(true);
+      setTimeout(() => { setShowPasswordModal(false); setPwSuccess(false); setCurrentPw(""); setNewPw(""); setConfirmPw(""); }, 2000);
+    } catch (e: unknown) {
+      setPwError(e instanceof Error ? e.message : "Failed to change password");
+    } finally {
+      setPwSaving(false);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -244,6 +268,7 @@ export default function UserProfile() {
           <div className="p-6 space-y-3">
             <button
               type="button"
+              onClick={() => { setShowPasswordModal(true); setPwError(""); setPwSuccess(false); setCurrentPw(""); setNewPw(""); setConfirmPw(""); }}
               className="px-4 py-2.5 text-sm font-semibold rounded-lg border-2 transition-opacity hover:opacity-70"
               style={{ color: NAVY, borderColor: NAVY }}
             >
@@ -255,6 +280,45 @@ export default function UserProfile() {
             </div>
           </div>
         </Card>
+
+        {showPasswordModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
+              <h3 className="text-lg font-bold mb-4" style={{ color: NAVY, fontFamily: SERIF }}>Change Password</h3>
+              {pwSuccess ? (
+                <div className="rounded-lg px-4 py-3 text-sm font-semibold" style={{ backgroundColor: "#F0FDF4", color: "#16A34A" }}>
+                  Password changed successfully!
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {pwError && <div className="rounded-lg px-4 py-2.5 text-sm" style={{ backgroundColor: "#FEF2F2", color: "#DC2626" }}>{pwError}</div>}
+                  <div>
+                    <FieldLabel required>Current Password</FieldLabel>
+                    <input type="password" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)}
+                      className={inputBase} style={inputStyle} />
+                  </div>
+                  <div>
+                    <FieldLabel required>New Password</FieldLabel>
+                    <input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)}
+                      className={inputBase} style={inputStyle} />
+                  </div>
+                  <div>
+                    <FieldLabel required>Confirm New Password</FieldLabel>
+                    <input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)}
+                      className={inputBase} style={inputStyle} />
+                  </div>
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button type="button" onClick={() => setShowPasswordModal(false)}
+                      className="px-4 py-2 text-sm font-semibold rounded-lg" style={{ color: TEXT }}>Cancel</button>
+                    <PrimaryBtn onClick={handleChangePassword} disabled={pwSaving}>
+                      {pwSaving ? "Saving..." : "Change Password"}
+                    </PrimaryBtn>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="flex justify-end">
           <PrimaryBtn onClick={handleSave} disabled={saving}>

@@ -17,7 +17,11 @@ def _safe_delay(task, *args, **kwargs):
     try:
         task.delay(*args, **kwargs)
     except Exception:
-        logger.warning("Celery unavailable, skipping task %s", task.name)
+        logger.warning("Celery unavailable, running task %s synchronously", task.name)
+        try:
+            task(*args, **kwargs)
+        except Exception:
+            logger.exception("Synchronous fallback failed for task %s", task.name)
 
 
 def _compose_email(title: str, intro: str, bullets: list[str] | None = None, cta_label: str | None = None, cta_url: str | None = None, closing: str | None = None) -> str:

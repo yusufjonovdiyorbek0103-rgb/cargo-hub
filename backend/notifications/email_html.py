@@ -26,7 +26,7 @@ def wrap_email_html(subject: str, body_plain: str) -> str:
     Wrap plain body in a simple, readable HTML layout with journal name.
     Escapes body for safe HTML; newlines become <br> for readability.
     """
-    journal = getattr(settings, "JOURNAL_NAME", "Ditech Asia")
+    journal = getattr(settings, "JOURNAL_NAME", "CAJAIDT")
     body_html = "<br>".join(_linkify_text(line) for line in body_plain.splitlines())
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -65,7 +65,7 @@ def render_account_notification_html(
     cta_url: str | None = None,
 ) -> str:
     """Professional responsive template for verification/profile notification emails."""
-    journal = getattr(settings, "JOURNAL_NAME", "Ditech Asia")
+    journal = getattr(settings, "JOURNAL_NAME", "CAJAIDT")
     roles = recipient_roles or []
     role_badges = "".join(
         (
@@ -133,7 +133,7 @@ def build_journal_certificate_email_html(
     google_scholar_url: str | None = None,
 ) -> str:
     """Professional HTML template for journal certificate emails with explicit links."""
-    journal = journal_name or getattr(settings, "JOURNAL_NAME", "Ditech Asia")
+    journal = journal_name or getattr(settings, "JOURNAL_NAME", "CAJAIDT")
     
     # Build Scholar section with explicit HTML link
     scholar_html = ""

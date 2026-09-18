@@ -286,7 +286,7 @@ def send_author_reviewer_recognition_certificate(self, review_id: int):
         f"Certificate page: {certificate_page_url}\n\n"
         "Please find the reviewer recognition certificate attached as PDF.\n\n"
         "Best regards,\n"
-        "Ditech Asia Editorial Team"
+        f"{getattr(settings, 'JOURNAL_NAME', 'CAJAIDT')} Editorial Team"
     )
     filename = f"reviewer-recognition-{certificate.verification_code}.pdf"
 
@@ -474,7 +474,7 @@ def send_issue_author_journal_certificate_emails(self, issue_id: int):
         body = (
             f"Dear {certificate.author_full_name},\n\n"
             "Your article has been included in a published journal issue.\n\n"
-            f"Journal: {getattr(settings, 'JOURNAL_NAME', 'Ditech Asia')}\n"
+            f"Journal: {getattr(settings, 'JOURNAL_NAME', 'CAJAIDT')}\n"
             f"Issue: Volume {issue.volume}, Issue {issue.issue_number}\n"
             f"Publication date: {publication_label}\n"
             f"Article: {certificate.article_title}\n\n"
@@ -482,7 +482,7 @@ def send_issue_author_journal_certificate_emails(self, issue_id: int):
             f"{scholar_line}\n\n"
             "Please find your Journal Certificate attached as PDF.\n\n"
             "Best regards,\n"
-            "Ditech Asia Editorial Team"
+            f"{getattr(settings, 'JOURNAL_NAME', 'CAJAIDT')} Editorial Team"
         )
 
         filename = f"journal-certificate-{certificate.verification_code}.pdf"
@@ -500,7 +500,7 @@ def send_issue_author_journal_certificate_emails(self, issue_id: int):
             html_message = build_journal_certificate_email_html(
                 subject=subject,
                 author_name=certificate.author_full_name,
-                journal_name=getattr(settings, "JOURNAL_NAME", "Ditech Asia"),
+                journal_name=getattr(settings, "JOURNAL_NAME", "CAJAIDT"),
                 volume=issue.volume,
                 issue_number=issue.issue_number,
                 publication_date=publication_label,

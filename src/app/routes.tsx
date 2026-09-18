@@ -54,6 +54,7 @@ import CallForPapers from "./CallForPapers";
 import BecomeReviewer from "./BecomeReviewer";
 import HelpCenter from "./HelpCenter";
 // 404
+import VerifyEmail from "./VerifyEmail";
 import NotFound from "./NotFound";
 // Auth guard
 import PortalGuard from "./portal/PortalGuard";
@@ -103,6 +104,7 @@ export const router = createBrowserRouter([
         ],
       },
       // Portal: login is public, dashboards require auth
+      { path: "/verify-email", Component: VerifyEmail },
       { path: "/portal", Component: Login },
       { path: "/portal/login", Component: Login },
       { path: "/portal/forgot-password", Component: ForgotPassword },

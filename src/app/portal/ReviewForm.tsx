@@ -113,7 +113,7 @@ export default function ReviewForm() {
         recommendation,
         ...ratings,
       };
-      await submitReview(Number(assignmentId), data);
+      await submitReview(Number(assignmentId), data, reviewFile);
       setSubmitted(true);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to submit review");

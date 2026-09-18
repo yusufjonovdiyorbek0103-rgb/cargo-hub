@@ -124,8 +124,32 @@ class SubmissionViewSet(
                 {"detail": "Provide 'file' in form-data."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        content = file_obj.read()
+
+        MAX_FILE_SIZE = 20 * 1024 * 1024  # 20 MB
+        if file_obj.size and file_obj.size > MAX_FILE_SIZE:
+            return Response(
+                {"detail": "File size exceeds the 20 MB limit."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         filename = file_obj.name or "file"
+        ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+
+        PDF_ONLY_TYPES = {"manuscript", "title_page"}
+        if file_type in PDF_ONLY_TYPES and ext != "pdf":
+            return Response(
+                {"detail": f"{file_type} must be a PDF file."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        ALLOWED_EXTENSIONS = {"pdf", "doc", "docx", "txt", "rtf", "odt", "png", "jpg", "jpeg", "gif", "zip"}
+        if ext and ext not in ALLOWED_EXTENSIONS:
+            return Response(
+                {"detail": f"File type '.{ext}' is not allowed."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        content = file_obj.read()
 
         if file_type in DIRECT_FILE_FIELDS:
             field_name = DIRECT_FILE_FIELDS[file_type]

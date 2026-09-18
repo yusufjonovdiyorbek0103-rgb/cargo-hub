@@ -144,6 +144,18 @@ export async function updateProfile(data: Partial<UserProfile>) {
   return res.json();
 }
 
+export async function changePassword(currentPassword: string, newPassword: string) {
+  const res = await apiFetch("/auth/change-password", {
+    method: "POST",
+    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to change password");
+  }
+  return res.json();
+}
+
 export function logout() {
   clearTokens();
 }
@@ -286,10 +298,32 @@ export async function declineAssignment(id: number, token?: string) {
   return res.json();
 }
 
-export async function submitReview(assignmentId: number, data: Record<string, unknown>) {
+export async function submitReview(
+  assignmentId: number,
+  data: Record<string, unknown>,
+  reviewFile?: File | null,
+) {
+  let body: FormData | string;
+  let headers: Record<string, string> | undefined;
+
+  if (reviewFile) {
+    const formData = new FormData();
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== null && value !== undefined) {
+        formData.append(key, String(value));
+      }
+    }
+    formData.append("review_file", reviewFile);
+    body = formData;
+  } else {
+    body = JSON.stringify(data);
+    headers = { "Content-Type": "application/json" };
+  }
+
   const res = await apiFetch(`/reviewer/assignments/${assignmentId}/submit-review/`, {
     method: "POST",
-    body: JSON.stringify(data),
+    body,
+    ...(headers ? { headers } : {}),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
