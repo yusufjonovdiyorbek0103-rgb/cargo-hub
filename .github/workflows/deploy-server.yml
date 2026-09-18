@@ -1,0 +1,42 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - claude/exciting-dijkstra-1eiifi
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy deploy script to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          source: deploy/server-deploy.sh
+          target: /tmp/cajaidt-ci
+          overwrite: true
+          strip_components: 1
+
+      - name: Run deployment
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          DEPLOY_BRANCH: ${{ github.ref_name }}
+          DEPLOY_REPO: https://github.com/${{ github.repository }}.git
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          envs: DEPLOY_BRANCH,DEPLOY_REPO
+          command_timeout: 15m
+          script: |
+            chmod +x /tmp/cajaidt-ci/server-deploy.sh
+            /tmp/cajaidt-ci/server-deploy.sh
