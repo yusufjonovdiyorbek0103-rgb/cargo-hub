@@ -8,30 +8,21 @@ set -euo pipefail
 # directly on port 8000.
 ###############################################################################
 
-DEPLOY_DIR="/var/www/diyor"
 BRANCH="${DEPLOY_BRANCH:-claude/exciting-dijkstra-1eiifi}"
 REPO="${DEPLOY_REPO:-https://github.com/yusufjonovdiyorbek0103-rgb/cargo-hub.git}"
 
 echo "============================================"
-echo " CAJAIDT Deploy (no-root): $BRANCH"
+echo " CAJAIDT Deploy (no-root v2): $BRANCH"
 echo "============================================"
 
-# ── Check if we can write to /var/www/diyor ──
-if [ ! -d "$DEPLOY_DIR" ]; then
-  echo "Creating $DEPLOY_DIR..."
-  mkdir -p "$DEPLOY_DIR" 2>/dev/null || {
-    echo "Cannot create $DEPLOY_DIR — trying home directory instead"
-    DEPLOY_DIR="$HOME/diyor"
-    mkdir -p "$DEPLOY_DIR"
-    echo "Using: $DEPLOY_DIR"
-  }
-fi
-
-if [ ! -w "$DEPLOY_DIR" ]; then
-  echo "$DEPLOY_DIR is not writable — using home directory"
+# ── Pick a writable deploy directory (NO sudo) ──
+DEPLOY_DIR="/var/www/diyor"
+if mkdir -p "$DEPLOY_DIR" 2>/dev/null && [ -w "$DEPLOY_DIR" ]; then
+  echo "  Using: $DEPLOY_DIR"
+else
   DEPLOY_DIR="$HOME/diyor"
   mkdir -p "$DEPLOY_DIR"
-  echo "Using: $DEPLOY_DIR"
+  echo "  /var/www/diyor not writable, using: $DEPLOY_DIR"
 fi
 
 mkdir -p "$DEPLOY_DIR"/{backend,frontend,logs,media,static,source}
